@@ -1,0 +1,24 @@
+{
+  "agents": [
+    {
+      "id": "a1",
+      "type": "minsk_news_parser",
+      "name": "Minsk парсер",
+      "feeds": "https://minsknews.by/rss/\nhttps://belta.by/rss",
+      "maxNews": 3,
+      "mode": "real"
+    },
+    {
+      "id": "a2",
+      "type": "telegram_media",
+      "name": "Telegram Медиа",
+      "telegramToken": "",
+      "telegramChatId": "",
+      "messageStyle": "card",
+      "mode": "real"
+    }
+  ],
+  "connections": [
+    { "id": "c1", "from": "a1", "to": "a2" }
+  ]
+}
