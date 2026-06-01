@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>NEURAL FLOW v5.6 — Minsk Media + Реальные фото + История новостей</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root{--bg:#0A0A0F;--bg2:#12121A;--bg3:#1A1A28;--bg4:#222233;--glass:rgba(255,255,255,.03);--glass2:rgba(255,255,255,.05);--gb:rgba(255,255,255,.06);--gb2:rgba(255,255,255,.1);--cyan:#00F0FF;--purple:#B000FF;--pink:#FF006E;--green:#00FF88;--orange:#FF8C00;--red:#FF3355;--yellow:#FFD700;--text:#E8E8F0;--text2:#8888A0;--text3:#55556A;--text4:#333345;--font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--rs:6px;--rm:10px;--rl:14px;--rxl:20px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;height:100vh;width:100vw}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+[data-tip]{position:relative}
+[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) scale(.9);background:rgba(20,20,30,.96);color:var(--text);padding:6px 10px;border-radius:var(--rs);font-size:10px;font-family:var(--font);white-space:nowrap;pointer-events:none;opacity:0;transition:all .2s;border:1px solid var(--gb2);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+[data-tip]:hover::after{opacity:1;transform:translateX(-50%) scale(1)}
+[data-tip]::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:rgba(20,20,30,.96);pointer-events:none;opacity:0;transition:all .2s;z-index:999}
+[data-tip]:hover::before{opacity:1}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#board{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;cursor:grab}
+#board.grabbing{cursor:grabbing}#board.connecting{cursor:crosshair}
+#left-panel{position:fixed;top:0;left:0;width:56px;height:100vh;background:rgba(8,8,12,.98);backdrop-filter:blur(24px);border-right:1px solid var(--gb);border-left:1px solid rgba(255,255,255,.02);box-shadow:4px 0 24px rgba(0,0,0,0.5), inset -1px 0 0 rgba(0,240,255,.1);z-index:100;display:flex;flex-direction:column;align-items:center;padding:12px 0 8px;transition:width .35s cubic-bezier(.4,0,.2,1);overflow:hidden;pointer-events:auto}
+#left-panel::before{content:'';position:absolute;left:54px;top:20%;height:40px;width:3px;background:var(--cyan);border-radius:0 3px 3px 0;opacity:.5;animation:lpPulse 3s infinite;pointer-events:none}
+@keyframes lpPulse{0%,100%{opacity:.3;transform:scaleY(1)}50%{opacity:.8;transform:scaleY(1.2)}}
+#left-panel:hover,#left-panel.expanded{width:310px;box-shadow:4px 0 32px rgba(0,0,0,0.7), inset -1px 0 0 rgba(0,240,255,.2)}
+.lp-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--cyan),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;box-shadow:0 0 16px rgba(0,240,255,.25);transition:transform .3s}
+#left-panel:hover .lp-logo{transform:scale(1.05)}
+.lp-title{white-space:nowrap;opacity:0;transition:opacity .25s;margin-left:10px;font-weight:700;font-size:14px;letter-spacing:1.2px;color:var(--text)}
+#left-panel:hover .lp-title,#left-panel.expanded .lp-title{opacity:1}
+.lp-row{display:flex;align-items:center;width:100%;padding:0 8px;margin-bottom:6px}
+.lp-search{width:calc(100% - 16px);margin:0 8px 8px;padding:8px 12px;background:var(--glass);border:1px solid var(--gb);border-radius:var(--rs);color:var(--text);font-size:11px;font-family:var(--font);outline:none;opacity:0;transition:opacity .2s,border-color .2s}
+#left-panel:hover .lp-search,#left-panel.expanded .lp-search{opacity:1}
+.lp-search::placeholder{color:var(--text3)}.lp-search:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,240,255,.1)}
+.lp-scroll{flex:1;width:100%;overflow-y:auto;overflow-x:hidden;padding:4px 0;scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
+.lp-section{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);padding:10px 10px 5px;white-space:nowrap;opacity:0;transition:opacity .25s;width:100%;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;font-weight:600}
+#left-panel:hover .lp-section,#left-panel.expanded .lp-section{opacity:1}
+.lp-section .sec-arrow{transition:transform .2s;font-size:8px;opacity:.5}
+.lp-section.collapsed .sec-arrow{transform:rotate(-90deg)}
+.lp-section.collapsed+.lp-section-items{display:none}
+.lp-section-items{display:flex;flex-direction:column;opacity:0;transition:opacity .25s}
+#left-panel:hover .lp-section-items,#left-panel.expanded .lp-section-items{opacity:1}
+.lib-item{display:flex;align-items:center;width:100%;padding:8px 10px;cursor:grab;transition:all .15s;border-radius:var(--rs);margin:2px 6px;border:1px solid transparent}
+.lib-item:hover{background:var(--glass2);border-color:var(--gb2);transform:translateX(2px)}
+.lib-item .li-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:1px solid var(--gb);background:rgba(255,255,255,.02)}
+.lib-item .li-info{margin-left:10px;white-space:nowrap;opacity:0;transition:opacity .2s;overflow:hidden}
+#left-panel:hover .li-info,#left-panel.expanded .li-info{opacity:1}
+.li-info .li-name{font-size:12px;font-weight:500;color:var(--text)}.li-info .li-desc{font-size:10px;color:var(--text3);margin-top:2px}
+#right-panel{position:fixed;top:0;right:-400px;width:380px;height:100vh;background:rgba(10,10,15,.96);backdrop-filter:blur(24px);border-left:1px solid var(--gb);z-index:100;transition:right .35s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+#right-panel.open{right:0}
+.rp-header{padding:16px 18px 12px;border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(10,10,15,.98);backdrop-filter:blur(20px);z-index:1}
+.rp-header h3{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.rp-close{width:24px;height:24px;border:none;background:var(--glass);color:var(--text2);border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.rp-close:hover{background:rgba(255,0,110,.15);color:var(--pink)}
+.rp-body{padding:14px 18px 24px}
+.fg{margin-bottom:12px}.fg label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:4px}
+.fg input[type="text"],.fg input[type="url"],.fg input[type="number"],.fg input[type="password"],.fg textarea,.fg select{width:100%;background:var(--glass);border:1px solid var(--gb);border-radius:var(--rs);color:var(--text);font-family:var(--font);font-size:11px;padding:8px 10px;outline:none;transition:all .2s}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,240,255,.1)}
+.fg textarea{resize:vertical;min-height:60px;font-family:var(--mono);font-size:10px;line-height:1.5}
+.fg select option{background:var(--bg2)}
+.agent-instructions{background:var(--glass);border:1px solid var(--gb);border-radius:var(--rm);padding:14px;margin-top:16px}
+.agent-instructions h4{font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.agent-instructions ol{padding-left:18px;font-size:10px;color:var(--text2);line-height:1.6}
+.agent-instructions li{margin-bottom:4px}
+.agent-instructions code{background:var(--bg3);padding:2px 5px;border-radius:3px;font-family:var(--mono);font-size:9px;color:var(--cyan)}
+.agent-instructions a{color:var(--cyan);text-decoration:none;border-bottom:1px dashed var(--cyan)}
+.agent-instructions a:hover{border-bottom-style:solid}
+.agent-instructions .inst-note{background:rgba(0,240,255,.05);border-left:2px solid var(--cyan);padding:8px;margin-top:8px;font-size:10px;color:var(--text2);border-radius:0 var(--rs) var(--rs) 0}
+.slider-row{display:flex;align-items:center;gap:8px}.slider-row input[type="range"]{flex:1;-webkit-appearance:none;height:3px;background:var(--bg3);border-radius:2px;outline:none}
+.slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--cyan);border-radius:50%;cursor:pointer;box-shadow:0 0 6px rgba(0,240,255,.4)}
+.sv{font-family:var(--mono);font-size:10px;color:var(--cyan);min-width:24px;text-align:right}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--glass);border-radius:var(--rs);border:1px solid var(--gb);cursor:pointer}
+.toggle-row span{font-size:11px}.toggle-sw{width:36px;height:20px;background:var(--bg3);border-radius:10px;position:relative;transition:background .2s;border:1px solid var(--gb)}
+.toggle-sw.active{background:rgba(0,240,255,.2);border-color:var(--cyan)}.toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--text2);border-radius:50%;transition:all .2s}
+.toggle-sw.active::after{left:18px;background:var(--cyan);box-shadow:0 0 6px rgba(0,240,255,.5)}
+.btn{width:100%;padding:10px;border:none;border-radius:var(--rs);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,rgba(0,240,255,.15),rgba(176,0,255,.15));border:1px solid rgba(0,240,255,.3);color:var(--cyan)}.btn-primary:hover{background:linear-gradient(135deg,rgba(0,240,255,.25),rgba(176,0,255,.25));box-shadow:0 0 20px rgba(0,240,255,.15)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-success{background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.3);color:var(--green)}.btn-success:hover{background:rgba(0,255,136,.2)}
+.btn-danger{background:rgba(255,0,110,.1);border:1px solid rgba(255,0,110,.2);color:var(--pink)}.btn-danger:hover{background:rgba(255,0,110,.2)}
+.btn-secondary{background:var(--glass);border:1px solid var(--gb);color:var(--text2);margin-top:5px}.btn-secondary:hover{background:var(--glass2);color:var(--text)}
+.btn-help{background:rgba(176,0,255,.1);border:1px solid rgba(176,0,255,.25);color:var(--purple)}.btn-help:hover{background:rgba(176,0,255,.18)}
+#bottom-bar{position:fixed;bottom:0;left:56px;right:0;height:48px;background:rgba(8,8,12,.95);backdrop-filter:blur(20px);border-top:1px solid var(--gb);z-index:100;display:flex;align-items:center;padding:0 14px;gap:10px}
+.ctrl-btn{display:flex;align-items:center;gap:5px;padding:8px 14px;border:none;border-radius:var(--rs);font-family:var(--font);font-size:10px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
+.ctrl-btn.primary{background:linear-gradient(135deg,var(--cyan),#00C8D4);color:var(--bg)}.ctrl-btn.primary:hover{box-shadow:0 0 16px rgba(0,240,255,.3);transform:translateY(-1px)}
+.ctrl-btn.primary:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.ctrl-btn.secondary{background:var(--glass);color:var(--text2);border:1px solid var(--gb)}.ctrl-btn.secondary:hover{background:var(--glass2);color:var(--text)}
+.ctrl-btn.danger{background:rgba(255,0,110,.1);color:var(--pink);border:1px solid rgba(255,0,110,.2)}.ctrl-btn.danger:hover{background:rgba(255,0,110,.2)}
+.ctrl-btn.template{background:linear-gradient(135deg,rgba(176,0,255,.12),rgba(0,240,255,.12));border:1px solid rgba(176,0,255,.25);color:var(--purple)}.ctrl-btn.template:hover{background:linear-gradient(135deg,rgba(176,0,255,.2),rgba(0,240,255,.2))}
+.ctrl-btn.history{background:rgba(255,215,0,.1);color:var(--yellow);border:1px solid rgba(255,215,0,.2)}.ctrl-btn.history:hover{background:rgba(255,215,0,.2)}
+.ctrl-btn.versions{background:rgba(0,255,136,.08);color:var(--green);border:1px solid rgba(0,255,136,.2)}.ctrl-btn.versions:hover{background:rgba(0,255,136,.15)}
+.ctrl-btn.scheduler{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.2)}.ctrl-btn.scheduler:hover{background:rgba(168,85,247,.18)}
+.ctrl-btn.roadmap{background:rgba(255,140,0,.1);color:var(--orange);border:1px solid rgba(255,140,0,.2)}.ctrl-btn.roadmap:hover{background:rgba(255,140,0,.18)}
+#console-panel{position:fixed;bottom:56px;right:6px;width:400px;max-height:240px;background:rgba(8,8,12,.96);backdrop-filter:blur(20px);border:1px solid var(--gb);border-radius:var(--rm);z-index:99;overflow:hidden;display:flex;flex-direction:column;transition:opacity .3s,transform .3s}
+#console-panel.hidden{opacity:0;transform:translateY(10px);pointer-events:none}
+.c-header{padding:8px 12px;background:var(--glass);border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
+.c-dot{width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:5px;animation:pulse-dot 2s infinite}
+.c-body{padding:8px 12px;overflow-y:auto;font-family:var(--mono);font-size:9px;line-height:1.5;max-height:190px}
+.c-line{opacity:0;animation:cFade .3s forwards}.c-line .ts{color:var(--text3);margin-right:4px}.c-line .an{color:var(--cyan);font-weight:500}
+.c-line .ok{color:var(--green)}.c-line .inf{color:var(--text2)}.c-line .err{color:var(--pink)}.c-line .wrn{color:var(--orange)}.c-line .str{color:var(--purple)}
+.c-line .cost{color:var(--yellow)}
+@keyframes cFade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+#zoom-ctrl{position:fixed;bottom:60px;left:72px;display:flex;flex-direction:column;gap:3px;z-index:50}
+.z-btn{width:28px;height:28px;background:rgba(10,10,15,.9);backdrop-filter:blur(10px);border:1px solid var(--gb);border-radius:6px;color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.z-btn:hover{background:var(--glass2);color:var(--text);border-color:rgba(0,240,255,.3)}
+#zoom-lvl{text-align:center;font-size:9px;color:var(--text3);padding:3px 0;font-family:var(--mono);background:rgba(10,10,15,.85);border:1px solid var(--gb);border-radius:4px}
+#ctx-menu{position:fixed;background:rgba(14,14,20,.98);backdrop-filter:blur(20px);border:1px solid var(--gb);border-radius:var(--rs);padding:4px;z-index:200;display:none;min-width:170px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.ctx-i{padding:7px 10px;font-size:10px;color:var(--text2);cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:7px;transition:all .1s}
+.ctx-i:hover{background:var(--glass2);color:var(--text)}.ctx-i.dng:hover{background:rgba(255,0,110,.1);color:var(--pink)}
+.ctx-sep{height:1px;background:var(--gb);margin:2px 4px}
+#toast-c{position:fixed;top:12px;right:12px;z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{padding:9px 14px;background:rgba(14,14,20,.98);backdrop-filter:blur(20px);border:1px solid var(--gb);border-radius:var(--rs);font-size:11px;color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,.4);animation:tIn .3s ease,tOut .3s ease 2.7s forwards;display:flex;align-items:center;gap:7px;pointer-events:auto}
+.toast.success{border-left:3px solid var(--green)}.toast.error{border-left:3px solid var(--pink)}.toast.info{border-left:3px solid var(--cyan)}.toast.warn{border-left:3px solid var(--orange)}
+@keyframes tIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes tOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal{background:var(--bg2);border:1px solid var(--gb);border-radius:var(--rl);width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.5);transform:scale(.96);transition:transform .25s}
+.modal-overlay.show .modal{transform:scale(1)}
+.modal-head{padding:18px 20px 14px;border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:14px;font-weight:600}
+.modal-body{padding:16px 20px 22px}.modal-foot{padding:14px 20px;border-top:1px solid var(--gb);display:flex;gap:8px;justify-content:flex-end}
+#templates-panel{position:fixed;bottom:56px;left:56px;right:0;max-height:0;background:rgba(8,8,12,.98);backdrop-filter:blur(24px);border-top:1px solid var(--gb);z-index:99;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1)}
+#templates-panel.open{max-height:320px}
+.tpl-header{padding:12px 18px;border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between}
+.tpl-header h4{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.tpl-body{padding:14px 18px;display:flex;gap:10px;overflow-x:auto;max-height:250px}
+.tpl-card{min-width:210px;max-width:250px;background:var(--glass);border:1px solid var(--gb);border-radius:var(--rm);padding:14px;cursor:pointer;transition:all .2s;flex-shrink:0}
+.tpl-card:hover{border-color:var(--cyan);background:rgba(0,240,255,.04);transform:translateY(-3px)}
+.tpl-card .tpl-icon{font-size:24px;margin-bottom:8px}.tpl-card .tpl-name{font-size:11px;font-weight:600;margin-bottom:4px}
+.tpl-card .tpl-desc{font-size:9px;color:var(--text3);line-height:1.4;margin-bottom:8px}
+.tpl-card .tpl-agents{display:flex;gap:4px;flex-wrap:wrap}
+.tpl-card .tpl-tag{font-size:8px;padding:2px 6px;border-radius:4px;background:var(--bg3);color:var(--text2);font-family:var(--mono)}
+#history-panel,#versions-panel,#scheduler-panel,#aigen-panel,#roadmap-panel,#help-panel{position:fixed;top:0;right:-400px;width:400px;height:100vh;background:rgba(8,8,12,.98);backdrop-filter:blur(24px);border-left:1px solid var(--gb);z-index:100;transition:right .35s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+#history-panel.open,#versions-panel.open,#scheduler-panel.open,#aigen-panel.open,#roadmap-panel.open,#help-panel.open{right:0}
+.panel-header{padding:18px 20px 14px;border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(8,8,12,.98);z-index:1}
+.panel-header h3{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.panel-body{padding:14px 20px}
+.guide-section{margin-bottom:20px}
+.guide-section h4{font-size:13px;font-weight:600;color:var(--cyan);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.guide-section p{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px}
+.guide-section ol,.guide-section ul{padding-left:18px;font-size:10px;color:var(--text2);line-height:1.6}
+.guide-section li{margin-bottom:4px}
+.guide-section code{background:var(--bg3);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--cyan)}
+.guide-section .tip{background:rgba(0,240,255,.04);border-left:3px solid var(--cyan);padding:10px;border-radius:0 var(--rs) var(--rs) 0;margin:10px 0;font-size:10px;color:var(--text2)}
+.guide-section .warn{background:rgba(255,140,0,.04);border-left:3px solid var(--orange);padding:10px;border-radius:0 var(--rs) var(--rs) 0;margin:10px 0;font-size:10px;color:var(--text2)}
+.guide-section .agent-card{background:var(--glass);border:1px solid var(--gb);border-radius:var(--rm);padding:12px;margin-bottom:8px}
+.guide-section .agent-card h5{font-size:11px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.guide-section .agent-card p{font-size:10px;color:var(--text3);margin:0}
+.hist-item,.ver-item,.sched-item{background:var(--glass);border:1px solid var(--gb);border-radius:var(--rm);padding:12px;margin-bottom:8px;transition:all .15s}
+.hist-item:hover,.ver-item:hover,.sched-item:hover{border-color:var(--cyan);background:rgba(0,240,255,.04)}
+.hist-item .hist-time,.ver-item .ver-time,.sched-item .sched-interval{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.hist-item .hist-name,.ver-item .ver-name,.sched-item .sched-name{font-size:11px;font-weight:600;margin:4px 0}
+.hist-item .hist-result{font-size:10px;color:var(--text2);line-height:1.4}
+.hist-item .hist-status,.sched-item .sched-status{font-size:9px;margin-top:4px}
+.hist-item .hist-cost{font-size:9px;color:var(--yellow);margin-top:2px;font-family:var(--mono)}
+.ver-item .ver-btns{display:flex;gap:4px;margin-top:6px}
+.ver-item .ver-btn{padding:4px 8px;border:1px solid var(--gb);border-radius:var(--rs);background:transparent;color:var(--text2);font-size:9px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.ver-item .ver-btn:hover{background:var(--glass2);color:var(--text)}
+.ver-item .ver-btn.restore:hover{border-color:var(--cyan);color:var(--cyan)}
+.ver-item .ver-btn.del:hover{border-color:var(--pink);color:var(--pink)}
+.sched-item{display:flex;align-items:center;justify-content:space-between}
+.sched-item .sched-info{flex:1}.sched-item .sched-next{font-size:9px;color:var(--cyan);font-family:var(--mono);margin-top:2px}
+.sched-toggle{width:36px;height:20px;background:var(--bg3);border-radius:10px;position:relative;cursor:pointer;border:1px solid var(--gb);flex-shrink:0;margin-left:8px}
+.sched-toggle.active{background:rgba(0,255,136,.2);border-color:var(--green)}
+.sched-toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--text2);border-radius:50%;transition:all .2s}
+.sched-toggle.active::after{left:18px;background:var(--green)}
+.aigen-result,.roadmap-item{margin-top:12px;background:var(--glass);border:1px solid var(--gb);border-radius:var(--rm);padding:14px}
+.roadmap-item{margin-bottom:12px}.roadmap-item h4{font-size:12px;font-weight:600;margin-bottom:4px}.roadmap-item p{font-size:10px;color:var(--text2);line-height:1.4}
+.roadmap-item .rm-status{font-size:9px;color:var(--cyan);font-family:var(--mono);margin-top:4px}
+#shortcuts-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--gb);border-radius:var(--rl);padding:22px;z-index:600;display:none;min-width:330px;box-shadow:0 16px 48px rgba(0,0,0,.5)}
+#shortcuts-panel.show{display:block}
+.shortcut-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--gb)}
+.shortcut-row:last-child{border-bottom:none}
+.shortcut-key{font-family:var(--mono);font-size:10px;background:var(--bg3);padding:3px 8px;border-radius:4px;color:var(--cyan)}
+.shortcut-desc{font-size:11px;color:var(--text2)}
+#help-btn{position:fixed;bottom:60px;right:8px;width:38px;height:38px;background:linear-gradient(135deg,var(--cyan),var(--purple));border:none;border-radius:50%;color:var(--bg);font-size:19px;font-weight:700;cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,240,255,.3);transition:all .2s}
+#help-btn:hover{transform:scale(1.1);box-shadow:0 0 30px rgba(0,240,255,.5)}
+</style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+<canvas id="board"></canvas>
+<div id="left-panel">
+<div class="lp-row"><div class="lp-logo">NF</div><span class="lp-title">NEURAL FLOW v5.6 (Автономный агрегатор)</span></div>
+<input type="text" class="lp-search" id="lp-search" placeholder="🔍 Поиск агентов..." oninput="filterAgents(this.value)">
+<div class="lp-scroll" id="lp-scroll"></div>
+</div>
+<div id="right-panel"><div class="rp-header"><h3>⚙ Инспектор</h3><button class="rp-close" onclick="closeInspector()">✕</button></div><div class="rp-body" id="rp-body"></div></div>
+<div id="history-panel"><div class="panel-header"><h3>📜 История</h3><button class="rp-close" onclick="togglePanel('history-panel')">✕</button><button class="ctrl-btn secondary" style="margin-left:auto; margin-right:8px; padding:4px 8px;" onclick="clearAllHistory()">Очистить всё</button></div><div class="panel-body" id="hist-body"></div></div>
+<div id="versions-panel"><div class="panel-header"><h3>💾 Версии</h3><button class="rp-close" onclick="togglePanel('versions-panel')">✕</button></div><div class="panel-body" id="ver-body"></div></div>
+<div id="scheduler-panel"><div class="panel-header"><h3>⏰ Scheduler Pro</h3><button class="rp-close" onclick="togglePanel('scheduler-panel')">✕</button></div><div class="panel-body" id="sched-body"></div></div>
+<div id="aigen-panel"><div class="panel-header"><h3>🤖 AI Генератор</h3><button class="rp-close" onclick="togglePanel('aigen-panel')">✕</button></div><div class="panel-body" id="aigen-body"></div></div>
+<div id="roadmap-panel"><div class="panel-header"><h3>🚀 Эволюция</h3><button class="rp-close" onclick="togglePanel('roadmap-panel')">✕</button></div><div class="panel-body" id="roadmap-body"></div></div>
+<div id="help-panel"><div class="panel-header"><h3>❓ Помощь</h3><button class="rp-close" onclick="togglePanel('help-panel')">✕</button></div><div class="panel-body" id="help-body"></div></div>
+<div id="bottom-bar">
+<button class="ctrl-btn primary" id="btn-run" onclick="runPipeline()" data-tip="▶ Запустить пайплайн (Ctrl+Enter)">▶ Запустить</button>
+<button class="ctrl-btn danger" id="btn-stop" style="display:none" onclick="stopPipeline()" data-tip="⏹ Остановить выполнение (Ctrl+Shift+S)">⏹ Стоп</button>
+<button class="ctrl-btn secondary" onclick="clearConsole()" data-tip="🗑 Очистить консоль вывода">🗑</button>
+<button class="ctrl-btn secondary" onclick="toggleConsole()" data-tip="📟 Показать/скрыть консоль">📟</button>
+<button class="ctrl-btn template" onclick="togglePanel('templates-panel')" data-tip="📋 Готовые шаблоны пайплайнов">📋</button>
+<button class="ctrl-btn history" onclick="togglePanel('history-panel')" data-tip="📜 История запусков пайплайнов">📜</button>
+<button class="ctrl-btn versions" onclick="saveVersion();togglePanel('versions-panel')" data-tip="💾 Сохранить версию проекта (Ctrl+S)">💾</button>
+<button class="ctrl-btn scheduler" onclick="togglePanel('scheduler-panel')" data-tip="⏰ Настроить расписание автозапуска">⏰</button>
+<button class="ctrl-btn secondary" onclick="togglePanel('aigen-panel')" data-tip="🤖 AI-генератор пайплайнов (Ctrl+G)">🤖</button>
+<button class="ctrl-btn roadmap" onclick="togglePanel('roadmap-panel')" data-tip="🚀 Предложения по эволюции продукта">🚀</button>
+<button class="ctrl-btn secondary" onclick="exportProject()" data-tip="📤 Экспорт проекта в JSON-файл">📤</button>
+<button class="ctrl-btn secondary" onclick="document.getElementById('import-input').click()" data-tip="📥 Импорт проекта из JSON-файла">📥</button>
+<button class="ctrl-btn secondary" onclick="manualSaveState()" data-tip="💾 Сохранить все настройки локально">💾 Сохранить</button>
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="importProject(event)">
+</div>
+<div id="console-panel"><div class="c-header"><div style="display:flex;align-items:center"><span class="c-dot"></span>Вывод системы</div><span id="console-count">0</span></div><div class="c-body" id="console-body"></div></div>
+<div id="zoom-ctrl">
+<button class="z-btn" onclick="zoomIn()" data-tip="Увеличить масштаб">+</button>
+<div id="zoom-lvl">100%</div>
+<button class="z-btn" onclick="zoomOut()" data-tip="Уменьшить масштаб">−</button>
+<button class="z-btn" onclick="resetView()" data-tip="Сбросить масштаб и позицию" style="font-size:10px">⊙</button>
+</div>
+<div id="ctx-menu"><div class="ctx-i" onclick="ctxDup()">📋 Дублировать</div><div class="ctx-i" onclick="ctxDisc()">✂ Отключить</div><div class="ctx-sep"></div><div class="ctx-i dng" onclick="ctxDel()">🗑 Удалить</div></div>
+<div id="toast-c"></div>
+<div id="templates-panel"><div class="tpl-header"><h4>📋 Готовые шаблоны</h4><button class="rp-close" onclick="togglePanel('templates-panel')">✕</button></div><div class="tpl-body" id="tpl-body"></div></div>
+<div id="shortcuts-panel"><div style="font-size:14px;font-weight:600;margin-bottom:12px">⌨️ Горячие клавиши</div>
+<div class="shortcut-row"><span class="shortcut-desc">Запустить пайплайн</span><span class="shortcut-key">Ctrl+Enter</span></div><div class="shortcut-row"><span class="shortcut-desc">Остановить</span><span class="shortcut-key">Ctrl+Shift+S</span></div>
+<div class="shortcut-row"><span class="shortcut-desc">Сохранить версию</span><span class="shortcut-key">Ctrl+S</span></div><div class="shortcut-row"><span class="shortcut-desc">Отменить удаление</span><span class="shortcut-key">Ctrl+Z</span></div>
+<div class="shortcut-row"><span class="shortcut-desc">Удалить агент</span><span class="shortcut-key">Delete</span></div><div class="shortcut-row"><span class="shortcut-desc">AI-генератор</span><span class="shortcut-key">Ctrl+G</span></div>
+<div class="shortcut-row"><span class="shortcut-desc">Поиск агентов</span><span class="shortcut-key">Ctrl+F</span></div><div class="shortcut-row"><span class="shortcut-desc">Закрыть панели</span><span class="shortcut-key">Escape</span></div>
+<div style="text-align:center;margin-top:12px"><button class="btn btn-secondary" style="width:auto;padding:6px 16px" onclick="togglePanel('shortcuts-panel')">Закрыть</button></div></div>
+<button id="help-btn" onclick="togglePanel('help-panel')" data-tip="❓ Открыть руководство по использованию">?</button>
+<script>
+// ==========================================
+// NEURAL FLOW v5.6 — ПОЛНОСТЬЮ РАБОЧАЯ ВЕРСИЯ С РЕАЛЬНЫМИ КАРТИНКАМИ, ИСТОРИЕЙ, АВТОСОХРАНЕНИЕМ
+// ==========================================
+
+// Добавляем метод roundRect в CanvasRenderingContext2D
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    this.moveTo(x+r, y);
+    this.lineTo(x+w-r, y);
+    this.quadraticCurveTo(x+w, y, x+w, y+r);
+    this.lineTo(x+w, y+h-r);
+    this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    this.lineTo(x+r, y+h);
+    this.quadraticCurveTo(x, y+h, x, y+h-r);
+    this.lineTo(x, y+r);
+    this.quadraticCurveTo(x, y, x+r, y);
+    return this;
+  };
+}
+
+// Глобальные константы и переменные
+const AGENT_TYPES = {
+  news_aggregator: { name: 'Новостной сборщик', icon: '📰', color: '#60A5FA', prompt: 'Автоматический сбор новостей из RSS и передача дальше.', pricePer1k: 0, cat: 'content', isSpecial: true },
+  telegram_bot: { name: 'Telegram Bot', icon: '📨', color: '#0088CC', prompt: 'Отправка через Telegram Bot API.', endpoint: 'https://api.telegram.org', models: [], pricePer1k: 0, cat: 'messenger' },
+  qwen_chat: { name: 'Qwen + веб-поиск', icon: '🤖', color: '#8B5CF6', prompt: 'LLM с доступом в интернет через DashScope', pricePer1k: 0.002, cat: 'llm', endpoint: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions' },
+  minsk_news_parser: { name: 'Minsk Новости (с фото)', icon: '🌆', color: '#FFB347', prompt: 'Парсинг новостей Минска с извлечением изображений и деталей', pricePer1k: 0.001, cat: 'content' },
+  telegram_media: { name: 'Telegram Медиа', icon: '📸', color: '#1E90FF', prompt: 'Отправляет текст + фото, как в канале minsk_gl', pricePer1k: 0, cat: 'messenger' }
+};
+
+const AGENT_INSTRUCTIONS = {
+  news_aggregator: { title: '📰 Новостной сборщик', steps: [ '1. Убедитесь, что локальный RSS‑сервер запущен на http://localhost:3000 (используйте server.js).', '2. В инспекторе укажите RSS‑ленты (один URL на строку).', '3. Настройте «Макс. новостей с ленты» и «Формат вывода».', '4. Соедините агент с Telegram‑ботом или другим получателем.', '5. Запустите пайплайн — агент самостоятельно соберёт новости и передаст их дальше.' ], note: '💡 Агент требует запущенный сервер server.js. Без него будет работать в Mock‑режиме с тестовыми данными.' },
+  telegram_bot: { title: '📨 Подключение Telegram Bot', steps: [ '1. Откройте @BotFather в Telegram', '2. Отправьте команду /newbot', '3. Следуйте инструкциям, получите Bot Token', '4. Вставьте Token в поле "Bot Token"', '5. Узнайте Chat ID: напишите боту, затем откройте https://api.telegram.org/bot<ВАШ_TOKEN>/getUpdates', '6. Найдите "chat":{"id":123456789} — это ваш Chat ID', '7. Вставьте Chat ID и нажмите "Тест"' ], note: '💡 Без токена работает в режиме Mock. Бот должен быть запущен через BotFather.' },
+  qwen_chat: { title: '🤖 Qwen + веб-поиск (DashScope)', steps: [ '1. Получите API‑ключ на Alibaba Cloud DashScope', '2. Вставьте ключ в поле "API Key"', '3. Выберите модель: qwen-plus (лучший баланс)', '4. Включите "Enable web search"', '5. Укажите System prompt', '6. Соедините с предыдущим агентом' ], note: '💡 В режиме Mock агент возвращает тестовый ответ.' },
+  minsk_news_parser: { title: '🌆 Парсер новостей Минска с фото', steps: [ '1. Укажите RSS-ленты новостных сайтов Минска (например, https://minsknews.by/rss/)', '2. Настройте "Макс. новостей" (рекомендуется 3-5)', '3. Убедитесь, что серверный эндпоинт /api/article работает (запущен server.js). Если нет — используется Mock с примерами', '4. Соедините этого агента с Telegram Media для отправки' ], note: 'Агент извлекает из каждой статьи og:image, описание и дату. При отсутствии сервера использует демо-данные.' },
+  telegram_media: { title: '📸 Отправка медиа в Telegram (стиль канала)', steps: [ '1. Создайте бота через @BotFather, получите токен', '2. Вставьте токен в поле "Bot Token"', '3. Узнайте Chat ID (как в инструкции для Telegram Bot)', '4. Выберите стиль сообщения: "card" — карточка с фото, "simple" — только текст', '5. Соедините этот агент с источником структурированных данных (minsk_news_parser)' ], note: 'Агент отправляет каждую новость отдельным сообщением с прикреплённой картинкой, эмуляция minsk_gl.' }
+};
+
+const CATEGORIES = { content: { name: '📊 Контент', types: ['news_aggregator','minsk_news_parser'] }, messenger: { name: '📡 Мессенджеры', types: ['telegram_bot','telegram_media'] }, llm: { name: '🧠 LLM', types: ['qwen_chat'] } };
+
+const PIPELINE_TEMPLATES = [
+  { id: 'tpl_news_telegram', icon: '📰', name: 'Новости → Telegram', desc: 'Сбор новостей из лент и отправка в Telegram', agents: [ { type: 'news_aggregator', name: 'Новости', x: -250, y: -40, feeds: 'https://lenta.ru/rss/news\nhttps://tass.ru/rss/v2.xml\nhttps://www.rbc.ru/rss/', maxPerFeed: 3, outputFormat: 'html' }, { type: 'telegram_bot', name: 'Telegram', x: 150, y: -40, telegramToken: '', telegramChatId: '' } ], connections: [[0,1]], autoRun: false },
+  { id: 'tpl_news_qwen_telegram', icon: '📰🤖', name: 'Новости → Qwen → Telegram', desc: 'Новости → анализ/поиск Qwen → итог в Telegram', agents: [ { type: 'news_aggregator', name: 'Новости', x: -400, y: 0, feeds: 'https://lenta.ru/rss/news\nhttps://tass.ru/rss/v2.xml', maxPerFeed: 3, outputFormat: 'html' }, { type: 'qwen_chat', name: 'Qwen', x: -100, y: 0, systemPrompt: 'Ты новостной аналитик.', temperature: 0.7, enableSearch: true, model: 'qwen-plus', maxTokens: 800 }, { type: 'telegram_bot', name: 'Telegram', x: 200, y: 0, telegramToken: '', telegramChatId: '' } ], connections: [[0,1],[1,2]], autoRun: false },
+  { id: 'tpl_minsk_media', icon: '🌆📸', name: 'Minsk Новости → Telegram Медиа', desc: 'Сбор новостей, извлечение фото, отправка в стиле канала minsk_gl', agents: [ { type: 'minsk_news_parser', name: 'Minsk парсер', x: -300, y: 0, feeds: 'https://minsknews.by/rss/\nhttps://belta.by/rss\nhttps://www.onliner.by/feed', maxNews: 3 }, { type: 'telegram_media', name: 'Telegram Медиа', x: 100, y: 0, telegramToken: '', telegramChatId: '@minsk_gl', messageStyle: 'card' } ], connections: [[0,1]], autoRun: false },
+  { id: 'tpl_current', icon: '🎛️', name: 'Текущий пайплайн (на доске)', desc: 'Запуск того, что сейчас находится на доске', agents: [], connections: [], autoRun: false, isCurrent: true }
+];
+const AI_PATTERNS = [ { keywords: ['новост','сборщик','rss','телеграм'], template: 'tpl_news_telegram' }, { keywords: ['анализ','qwen','чат','поиск'], template: 'tpl_news_qwen_telegram' }, { keywords: ['минск','фото','картинк','медиа','minsk'], template: 'tpl_minsk_media' } ];
+const ROADMAP_PROPOSALS = [ { title: '📰 Улучшенный сборщик', desc: 'Поддержка Atom, фильтрация.', status: 'Планируется' }, { title: '🌆 Minsk Media', desc: 'Парсинг фото и отправка в стиле канала', status: '✅ Реализован в v5.6' }, { title: '🔒 Безопасность', desc: 'Шифрование токенов.', status: 'Концепт' }, { title: '⏰ Расширенный планировщик', desc: 'Запуск по расписанию (день+время) и по интервалу', status: '✅ v5.6' } ];
+
+let agents = [], connections = [], particles = [], customTypes = {}, selectedAgent = null, ctxAgentId = null, isRunning = false, pipelineAborted = false;
+let camera = { x: 0, y: 0, zoom: 1 }, isPanning = false, panStart = { x: 0, y: 0 }, isDragging = false, dragAgent = null, dragOff = { x: 0, y: 0 };
+let isConnecting = false, connFrom = null, connPos = { x: 0, y: 0 }, consoleLines = 0, needsRender = true, runHistory = [], undoStack = [], totalCost = 0;
+let projectVersions = [], schedulerTasks = [], schedulerInterval = null;
+const bgC = document.getElementById('bg-canvas'), bgX = bgC.getContext('2d'), brdC = document.getElementById('board'), brdX = brdC.getContext('2d');
+let W, H;
+
+// ========== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ: история новостей, кэш изображений ==========
+const imageCache = new Map();
+let sentNewsHistory = JSON.parse(localStorage.getItem('sent_news') || '[]');
+
+function addToHistory(titles) {
+  sentNewsHistory = [...new Set([...titles.map(t=>t.toLowerCase().trim()), ...sentNewsHistory])].slice(0, 500);
+  localStorage.setItem('sent_news', JSON.stringify(sentNewsHistory));
+}
+function isDuplicate(title) {
+  return sentNewsHistory.includes(title.toLowerCase().trim());
+}
+
+async function fetchOgImage(articleUrl) {
+  if (!articleUrl) return null;
+  if (imageCache.has(articleUrl)) return imageCache.get(articleUrl);
+  try {
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(articleUrl)}`;
+    const resp = await fetch(proxyUrl, { timeout: 5000 });
+    if (!resp.ok) throw new Error();
+    const html = await resp.text();
+    const match = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
+    if (match && match[1]) {
+      imageCache.set(articleUrl, match[1]);
+      return match[1];
+    }
+    const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (imgMatch && imgMatch[1]) {
+      imageCache.set(articleUrl, imgMatch[1]);
+      return imgMatch[1];
+    }
+    imageCache.set(articleUrl, null);
+    return null;
+  } catch(e) {
+    imageCache.set(articleUrl, null);
+    return null;
+  }
+}
+
+const uid = () => 'a' + Math.random().toString(36).substr(2, 9);
+const sw2w = (sx, sy) => ({ x: (sx - camera.x) / camera.zoom, y: (sy - camera.y) / camera.zoom });
+const w2s = (wx, wy) => ({ x: wx * camera.zoom + camera.x, y: wy * camera.zoom + camera.y });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+function resize() { W = innerWidth; H = innerHeight; bgC.width = W; bgC.height = H; brdC.width = W; brdC.height = H; needsRender = true }
+addEventListener('resize', resize); resize();
+
+function toast(msg, type = 'info') { const c = document.getElementById('toast-c'), t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 3000) }
+function togglePanel(id) { const el = document.getElementById(id); if (!el) return; ['right-panel','history-panel','versions-panel','scheduler-panel','aigen-panel','roadmap-panel','help-panel','templates-panel'].forEach(p => { if (p !== id) document.getElementById(p).classList.remove('open') }); el.classList.toggle('open'); beep('click') }
+function log(agent, msg, type = 'inf') { const b = document.getElementById('console-body'), l = document.createElement('div'); l.className = 'c-line'; const ts = new Date().toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit', second:'2-digit' }); l.innerHTML = `<span class="ts">[${ts}]</span> <span class="an">${agent}</span> <span class="${type}">${msg}</span>`; b.appendChild(l); b.scrollTop = b.scrollHeight; consoleLines++; document.getElementById('console-count').textContent = consoleLines + ' строк'; }
+function clearConsole() { document.getElementById('console-body').innerHTML = ''; consoleLines = 0; document.getElementById('console-count').textContent = '0'; beep('click') }
+function toggleConsole() { document.getElementById('console-panel').classList.toggle('hidden'); beep('click') }
+function estimateCost(agent, result) { const price = agent.pricePer1k || 0; if (!price) return 0; const tokens = Math.ceil((String(result).length)/4); return (tokens/1000)*price }
+
+function addHistory(name, status, result, cost) { runHistory.unshift({ time: new Date().toISOString(), name, status, result, cost: cost||0, agentCount: agents.length }); if(runHistory.length>200) runHistory.pop(); try{ localStorage.setItem('nf_history', JSON.stringify(runHistory)) }catch(e){} renderHistory() }
+function loadHistory() { try{ const r = localStorage.getItem('nf_history'); if(r) runHistory = JSON.parse(r) }catch(e){} renderHistory() }
+function renderHistory() { const b = document.getElementById('hist-body'); if(!runHistory.length){ b.innerHTML='<p style="color:var(--text3);font-size:11px;text-align:center;padding:20px">История пуста</p>'; return } b.innerHTML = runHistory.map((h, idx) => `<div class="hist-item"><div class="hist-time">${new Date(h.time).toLocaleString('ru-RU')}</div><div class="hist-name">${esc(h.name)}</div><div class="hist-result">${esc(h.result).substring(0,100)}...</div><div class="hist-cost">💰 $${(h.cost||0).toFixed(4)}</div><div class="hist-status" style="color:${h.status==='success'?'var(--green)':'var(--text2)'}">${h.status.toUpperCase()} · ${h.agentCount} агентов</div><button class="ver-btn del" style="margin-top:6px; width:auto;" onclick="deleteHistoryEntry(${idx})">🗑 Удалить</button></div>`).join(''); }
+function deleteHistoryEntry(index) { if(index >=0 && index < runHistory.length) { runHistory.splice(index,1); localStorage.setItem('nf_history', JSON.stringify(runHistory)); renderHistory(); toast('Запись удалена','info'); beep('click'); } }
+function clearAllHistory() { runHistory = []; localStorage.setItem('nf_history', JSON.stringify(runHistory)); renderHistory(); toast('Вся история очищена','success'); beep('ok'); }
+function saveVersion() { const v = { id: uid(), time: new Date().toISOString(), name: 'v'+(projectVersions.length+1), data: { agents: agents.map(a=>({...a})), connections: connections.map(c=>({...c})), camera: {...camera}, customTypes: {...customTypes} } }; projectVersions.unshift(v); if(projectVersions.length>20) projectVersions.pop(); try{ localStorage.setItem('nf_versions', JSON.stringify(projectVersions)) }catch(e){} renderVersions(); toast('Версия сохранена','success'); beep('ok') }
+function loadVersions() { try{ const r = localStorage.getItem('nf_versions'); if(r) projectVersions = JSON.parse(r) }catch(e){} renderVersions() }
+function renderVersions() { const b = document.getElementById('ver-body'); if(!projectVersions.length){ b.innerHTML='<p style="color:var(--text3);font-size:11px;text-align:center;padding:20px">Нет версий</p>'; return } b.innerHTML = projectVersions.map(v => `<div class="ver-item"><div class="ver-info"><div class="ver-time">${new Date(v.time).toLocaleString('ru-RU')}</div><div class="ver-name">${v.name} · ${v.data.agents?.length||0} агентов</div></div><div class="ver-btns"><button class="ver-btn restore" onclick="restoreVersion('${v.id}')">↩</button><button class="ver-btn del" onclick="deleteVersion('${v.id}')">🗑</button></div></div>`).join('') }
+function restoreVersion(id) { const v = projectVersions.find(x=>x.id===id); if(!v) return; agents = v.data.agents||[]; connections = v.data.connections||[]; camera = v.data.camera||{x:0,y:0,zoom:1}; customTypes = v.data.customTypes||{}; needsRender=true; saveState(); renderLeftPanel(); toast('Восстановлено','success'); beep('ok') }
+function deleteVersion(id) { projectVersions = projectVersions.filter(x=>x.id!==id); try{ localStorage.setItem('nf_versions', JSON.stringify(projectVersions)) }catch(e){} renderVersions(); toast('Удалено','info') }
+
+// --- Планировщик (расширенный) ---
+function computeNextRun(task) {
+  const now = Date.now();
+  if (task.type === 'interval') {
+    const interval = task.interval || 300;
+    return now + interval * 1000;
+  } else {
+    const [hour, minute] = (task.time || '09:00').split(':').map(Number);
+    const days = task.days || [0];
+    let next = new Date(now);
+    next.setHours(hour, minute, 0, 0);
+    while (!days.includes(next.getDay()) || next.getTime() <= now) {
+      next.setDate(next.getDate() + 1);
+    }
+    return next.getTime();
+  }
+}
+function renderScheduler() { 
+  const b = document.getElementById('sched-body'); 
+  let html = '<div style="margin-bottom:16px; border-bottom:1px solid var(--gb); padding-bottom:12px;"><div class="fg"><label>Тип задачи</label><select id="sched_type"><option value="interval">⏱ Интервал (секунды)</option><option value="datetime">📅 По расписанию (день+время)</option></select></div><div id="sched_interval_block"><div class="fg"><label>Интервал (секунды)</label><input type="number" id="sched-interval" value="300" min="10"></div></div><div id="sched_datetime_block" style="display:none;"><div class="fg"><label>Время (HH:MM)</label><input type="time" id="sched_time" value="09:00"></div><div class="fg"><label>Дни недели</label><div style="display:flex; gap:8px; flex-wrap:wrap;" id="sched_days">' + ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'].map((d,i)=>`<label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" value="${i}" ${i===0?'checked':''}> ${d}</label>`).join('') + '</div></div></div><div class="fg"><label>Что запускать</label><select id="sched_tpl"><option value="current">🎛️ Текущий пайплайн (на доске)</option>' + PIPELINE_TEMPLATES.filter(t=>!t.isCurrent).map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('') + '</select></div><button class="btn btn-primary" onclick="addSchedulerTask()">➕ Добавить задачу</button></div>'; 
+  if(!schedulerTasks.length) html+='<p style="color:var(--text3);font-size:11px;text-align:center">Нет запланированных задач</p>'; 
+  else schedulerTasks.forEach(t=>{ 
+    let info = ''; 
+    if(t.type==='interval') info = `Интервал: ${t.interval}с`; 
+    else info = `Расписание: ${t.time} ${t.days.map(d=>['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'][d]).join(',')}`; 
+    html+=`<div class="sched-item"><div class="sched-info"><div class="sched-name">${t.isCurrent ? '🎛️ Текущий пайплайн' : (PIPELINE_TEMPLATES.find(p=>p.id===t.template)?.name || t.template)}</div><div class="sched-interval">${info}</div><div class="sched-next">Следующий запуск: ${t.nextRun ? new Date(t.nextRun).toLocaleString() : '—'}</div><div class="sched-status" style="color:${t.active?'var(--green)':'var(--text3)'}">${t.active?'● Активна':'○ Отключена'}</div></div><div class="sched-toggle ${t.active?'active':''}" onclick="toggleSchedTask('${t.id}')"></div><button class="ver-btn del" style="margin-left:4px" onclick="removeSchedTask('${t.id}')">✕</button></div>` 
+  }); 
+  b.innerHTML = html; 
+  const typeSelect = document.getElementById('sched_type'); 
+  if(typeSelect) { 
+    typeSelect.onchange = function() { 
+      document.getElementById('sched_interval_block').style.display = this.value==='interval' ? 'block' : 'none'; 
+      document.getElementById('sched_datetime_block').style.display = this.value==='datetime' ? 'block' : 'none'; 
+    }; 
+    typeSelect.dispatchEvent(new Event('change')); 
+  } 
+}
+function loadScheduler() { 
+  try{ 
+    const r = localStorage.getItem('nf_scheduler'); 
+    if(r) { 
+      schedulerTasks = JSON.parse(r); 
+      schedulerTasks.forEach(t=>{ if(t.nextRun && t.nextRun < Date.now()) t.nextRun = computeNextRun(t); }); 
+    } 
+  } catch(e){} 
+  renderScheduler(); 
+  startScheduler(); 
+}
+function addSchedulerTask() { 
+  const type = document.getElementById('sched_type').value; 
+  let newTask = { id: uid(), active: true, type, isCurrent: false }; 
+  if(type==='interval') { 
+    const interval = parseInt(document.getElementById('sched-interval').value)||300; 
+    if(interval<10){ toast('Минимум 10с','error'); return } 
+    newTask.interval = interval; 
+  } else { 
+    const time = document.getElementById('sched_time').value; 
+    if(!time) { toast('Укажите время','error'); return } 
+    const days = Array.from(document.querySelectorAll('#sched_days input:checked')).map(cb=>parseInt(cb.value)); 
+    if(days.length===0) { toast('Выберите хотя бы один день','error'); return } 
+    newTask.time = time; 
+    newTask.days = days; 
+  } 
+  const tplId = document.getElementById('sched_tpl').value; 
+  if(tplId==='current') { 
+    newTask.isCurrent = true; 
+    newTask.template = null; 
+  } else { 
+    newTask.template = tplId; 
+    newTask.isCurrent = false; 
+  } 
+  newTask.nextRun = computeNextRun(newTask); 
+  schedulerTasks.push(newTask); 
+  try{ localStorage.setItem('nf_scheduler', JSON.stringify(schedulerTasks)) }catch(e){} 
+  renderScheduler(); 
+  startScheduler(); 
+  toast('Задача добавлена','success'); 
+}
+function toggleSchedTask(id) { 
+  const t = schedulerTasks.find(x=>x.id===id); 
+  if(!t) return; 
+  t.active = !t.active; 
+  try{ localStorage.setItem('nf_scheduler', JSON.stringify(schedulerTasks)) }catch(e){} 
+  renderScheduler(); 
+  startScheduler(); 
+}
+function removeSchedTask(id) { 
+  schedulerTasks = schedulerTasks.filter(x=>x.id!==id); 
+  try{ localStorage.setItem('nf_scheduler', JSON.stringify(schedulerTasks)) }catch(e){} 
+  renderScheduler(); 
+  startScheduler(); 
+  toast('Задача удалена','info'); 
+}
+function startScheduler() { 
+  if(schedulerInterval) clearInterval(schedulerInterval); 
+  schedulerInterval = setInterval(()=>{ 
+    const now = Date.now(); 
+    schedulerTasks.forEach(t=>{ 
+      if(t.active && t.nextRun && now >= t.nextRun && !isRunning) { 
+        if(t.isCurrent) { 
+          if(agents.length) runPipeline(); 
+          else log('⏰ Scheduler','Текущий пайплайн пуст, пропускаем','wrn'); 
+        } else { 
+          const template = PIPELINE_TEMPLATES.find(p=>p.id===t.template); 
+          if(template) loadTemplate(t.template, true); 
+          else log('⏰ Scheduler','Шаблон не найден','err'); 
+        } 
+        t.nextRun = computeNextRun(t); 
+        try{ localStorage.setItem('nf_scheduler', JSON.stringify(schedulerTasks)) }catch(e){} 
+        renderScheduler(); 
+      } 
+    }); 
+  }, 2000); 
+}
+function renderLeftPanel() { 
+  const scroll = document.getElementById('lp-scroll'); 
+  let html = ''; 
+  for(const [ck, cat] of Object.entries(CATEGORIES)){ 
+    html += `<div class="lp-section" onclick="this.classList.toggle('collapsed')"><span class="sec-arrow">▼</span>${cat.name}</div><div class="lp-section-items">`; 
+    cat.types.forEach(type=>{ 
+      const info = AGENT_TYPES[type]; 
+      if(!info) return; 
+      html += `<div class="lib-item" draggable="true" data-type="${type}"><div class="li-icon" style="background:${info.color}15;border-color:${info.color}40">${info.icon}</div><div class="li-info"><div class="li-name">${info.name}</div><div class="li-desc">${info.prompt ? info.prompt.substring(0,40)+'...':''}</div></div></div>`; 
+    }); 
+    html += '</div>'; 
+  } 
+  scroll.innerHTML = html; 
+  scroll.querySelectorAll('.lib-item').forEach(el=>{ 
+    el.addEventListener('dragstart', e=>{ 
+      e.dataTransfer.setData('type', el.dataset.type); 
+      e.dataTransfer.effectAllowed = 'copy'; 
+    }); 
+  }); 
+}
+function filterAgents(query) { 
+  const q = query.toLowerCase(); 
+  document.querySelectorAll('.lib-item').forEach(el=>{ 
+    const n = el.querySelector('.li-name')?.textContent.toLowerCase()||'', 
+          d = el.querySelector('.li-desc')?.textContent.toLowerCase()||''; 
+    el.style.display = (n.includes(q)||d.includes(q)) ? 'flex' : 'none'; 
+  }); 
+}
+function createAgent(type, x, y, overrides = {}) { 
+  const info = AGENT_TYPES[type] || customTypes[type] || { name: type, icon:'⚡', color:'#B000FF', prompt:'', pricePer1k:0.005 }; 
+  const defaults = type==='news_aggregator'?{ feeds: 'https://lenta.ru/rss/news\nhttps://tass.ru/rss/v2.xml\nhttps://www.rbc.ru/rss/', maxPerFeed:3, outputFormat:'html' }:(type==='qwen_chat'?{ systemPrompt:'Ты новостной аналитик.', temperature:0.7, enableSearch:true, model:'qwen-plus', maxTokens:800, apiKey:'' }:(type==='minsk_news_parser'?{ feeds:'https://minsknews.by/rss/\nhttps://belta.by/rss\nhttps://www.onliner.by/feed', maxNews:3 }:(type==='telegram_media'?{ telegramToken:'', telegramChatId:'', messageStyle:'card' }:{}))); 
+  const a = { id: uid(), type, name: info.name, x, y, w:210, h:120, status:'idle', progress:0, prompt: info.prompt||'', pricePer1k: info.pricePer1k||0.005, performance:(.8+Math.random()*.19).toFixed(2), color: info.color, icon: info.icon, mode:'mock', ...defaults, ...overrides }; 
+  agents.push(a); 
+  needsRender=true; 
+  saveState(); 
+  return a; 
+}
+function createConnection(fromId, toId) { 
+  if(fromId===toId) return; 
+  if(connections.find(c=>c.from===fromId && c.to===toId)) return; 
+  connections.push({ id: uid(), from: fromId, to: toId, animOff: Math.random(), active: false }); 
+  needsRender=true; 
+  saveState(); 
+  beep('connect') 
+}
+function saveState() { 
+  try{ localStorage.setItem('nf_v5', JSON.stringify({ agents: agents.map(a=>({...a})), connections: connections.map(c=>({...c})), camera: {...camera}, customTypes: {...customTypes} })) }catch(e){} 
+}
+function loadState() { 
+  try{ const r = localStorage.getItem('nf_v5'); if(r){ const s = JSON.parse(r); agents = s.agents||[]; connections = s.connections||[]; if(s.camera) camera = s.camera; customTypes = s.customTypes||{}; return true } }catch(e){} 
+  return false 
+}
+function exportProject() { 
+  const s = { agents, connections, camera, customTypes, history: runHistory, versions: projectVersions, scheduler: schedulerTasks, version:'5.6' }; 
+  const blob = new Blob([JSON.stringify(s,null,2)], {type:'application/json'}); 
+  const url = URL.createObjectURL(blob); 
+  const a = document.createElement('a'); 
+  a.href = url; 
+  a.download = `neuralflow_${Date.now()}.json`; 
+  a.click(); 
+  URL.revokeObjectURL(url); 
+  toast('Экспортировано','success'); 
+  beep('ok') 
+}
+function importProject(e) { 
+  const file = e.target.files[0]; 
+  if(!file) return; 
+  const r = new FileReader(); 
+  r.onload = () => { 
+    try { 
+      const s = JSON.parse(r.result); 
+      agents = s.agents||[]; 
+      connections = s.connections||[]; 
+      camera = s.camera||{x:0,y:0,zoom:1}; 
+      customTypes = s.customTypes||{}; 
+      if(s.history) runHistory = s.history; 
+      if(s.versions) projectVersions = s.versions; 
+      if(s.scheduler) schedulerTasks = s.scheduler; 
+      needsRender=true; 
+      saveState(); 
+      renderLeftPanel(); 
+      renderHistory(); 
+      renderVersions(); 
+      renderScheduler(); 
+      toast('Импортировано','success'); 
+      beep('ok') 
+    } catch(err){ toast('Ошибка: '+err.message,'error'); beep('err') } 
+  }; 
+  r.readAsText(file); 
+  e.target.value='' 
+}
+function openInspector(agent) { selectedAgent = agent; document.getElementById('right-panel').classList.add('open'); renderInspector(agent) }
+function closeInspector() { document.getElementById('right-panel').classList.remove('open'); selectedAgent = null }
+function fillFeedsPreset(agentId) { 
+  const presetFeeds = `https://feeds.bbci.co.uk/news/rss.xml\nhttps://www.theguardian.com/world/rss\nhttps://news.yahoo.com/rss/\nhttps://feeds.npr.org/1001/rss.xml\nhttps://www.cbc.ca/webfeed/rss/rss-topstories\nhttps://www.euronews.com/rss\nhttps://www.france24.com/en/rss\nhttps://rss.dw.com/rdf/rss-en-all\nhttps://lenta.ru/rss/news\nhttps://tass.ru/rss/v2.xml\nhttps://www.rbc.ru/rss/\nhttps://www.kommersant.ru/RSS/main.xml\nhttps://www.interfax.ru/rss.asp\nhttps://iz.ru/xml/rss/all.xml\nhttps://rg.ru/xml/rss.xml\nhttps://www.m24.ru/rss.xml\nhttps://www.onliner.by/feed\nhttps://minsknews.by/rss/\nhttps://grodnonews.by/rss/\nhttps://www.pinsknews.by/rss/\nhttps://news.google.com/rss?hl=ru&gl=BY&ceid=BY:ru\nhttps://news.google.com/rss?hl=ru&gl=BY&ceid=BY:ru&q=Минск\nhttps://news.google.com/rss?hl=ru&gl=BY&ceid=BY:ru&q=Брест\nhttps://news.google.com/rss?hl=ru&gl=BY&ceid=BY:ru&q=Витебск\nhttps://news.google.com/rss?hl=ru&gl=BY&ceid=BY:ru&q=Гомель\nhttps://news.google.com/rss?hl=ru&gl=BY&ceid=BY:ru&q=Гродно\nhttps://news.google.com/rss?hl=ru&gl=BY&ceid=BY:ru&q=Могилев\nhttps://feeds.feedburner.com/TechCrunch/\nhttps://www.theverge.com/rss/index.xml\nhttps://www.wired.com/feed/rss\nhttps://feeds.arstechnica.com/arstechnica/index/\nhttps://news.ycombinator.com/rss\nhttps://www.technologyreview.com/feed/`; 
+  const a = agents.find(x=>x.id===agentId); 
+  if(a) { 
+    a.feeds = presetFeeds; 
+    upA(agentId, 'feeds', presetFeeds); 
+    toast('Ленты добавлены. Можете удалить лишние строки.','info'); 
+  } 
+}
+function renderInspector(a) { 
+  const info = AGENT_TYPES[a.type]||customTypes[a.type]||{}; 
+  const b = document.getElementById('rp-body'); 
+  let html = `<div class="fg"><label>Имя</label><input type="text" value="${esc(a.name)}" oninput="upA('${a.id}','name',this.value)"></div><div style="display:flex;gap:6px;margin-bottom:12px"><span style="font-size:18px">${a.icon}</span><span style="font-size:11px;color:var(--text2)">${info.name||a.type}</span></div>`; 
+  if(a.type==='minsk_news_parser'){ 
+    html+=`<div class="fg"><label>RSS ленты (одна на строку)</label><textarea oninput="upA('${a.id}','feeds',this.value)" style="min-height:150px; font-family:monospace;">${esc(a.feeds||'')}</textarea><div style="font-size:9px; color:var(--text3); margin-top:4px;">💡 Добавьте URL лент, каждый с новой строки. Можно использовать предложенные ниже.</div><button class="btn btn-secondary" style="margin-top:5px;" onclick="fillFeedsPreset('${a.id}')">📋 Вставить предустановленные ленты (мир/РФ/Беларусь/Tech)</button></div><div class="fg"><label>Макс. новостей</label><input type="number" value="${a.maxNews||3}" oninput="upA('${a.id}','maxNews',+this.value)"></div>`; 
+  } else if(a.type==='telegram_media'){ 
+    html+=`<div class="fg"><label>Bot Token</label><input type="password" value="${esc(a.telegramToken||'')}" oninput="upA('${a.id}','telegramToken',this.value)"></div><div class="fg"><label>Chat ID</label><input type="text" value="${esc(a.telegramChatId||'')}" oninput="upA('${a.id}','telegramChatId',this.value)"></div><div class="fg"><label>Стиль сообщения</label><select onchange="upA('${a.id}','messageStyle',this.value)"><option value="card" ${a.messageStyle==='card'?'selected':''}>Карточка (фото+текст)</option><option value="simple" ${a.messageStyle==='simple'?'selected':''}>Только текст</option></select></div>`; 
+  } else if(a.type==='news_aggregator'){ 
+    html+=`<div class="fg"><label>RSS ленты</label><textarea oninput="upA('${a.id}','feeds',this.value)" style="min-height:100px; font-family:monospace;">${esc(a.feeds||'')}</textarea><button class="btn btn-secondary" style="margin-top:5px;" onclick="fillFeedsPreset('${a.id}')">📋 Вставить предустановленные ленты</button></div><div class="fg"><label>Макс. новостей с ленты</label><input type="number" value="${a.maxPerFeed||3}" oninput="upA('${a.id}','maxPerFeed',+this.value)"></div><div class="fg"><label>Формат вывода</label><select onchange="upA('${a.id}','outputFormat',this.value)"><option value="html" ${a.outputFormat==='html'?'selected':''}>HTML</option><option value="json" ${a.outputFormat==='json'?'selected':''}>JSON</option></select></div>`; 
+  } else if(a.type==='qwen_chat'){ 
+    html+=`<div class="fg"><label>API Key (DashScope)</label><input type="password" value="${esc(a.apiKey||'')}" oninput="upA('${a.id}','apiKey',this.value)"></div><div class="fg"><label>Модель</label><select onchange="upA('${a.id}','model',this.value)"><option value="qwen-plus" ${a.model==='qwen-plus'?'selected':''}>qwen-plus</option><option value="qwen-turbo" ${a.model==='qwen-turbo'?'selected':''}>qwen-turbo</option><option value="qwen-max" ${a.model==='qwen-max'?'selected':''}>qwen-max</option></select></div><div class="fg"><label>System prompt</label><textarea oninput="upA('${a.id}','systemPrompt',this.value)" style="min-height:80px">${esc(a.systemPrompt||'')}</textarea></div><div class="fg"><label>Temperature (0-1)</label><input type="number" step="0.1" min="0" max="1" value="${a.temperature||0.7}" oninput="upA('${a.id}','temperature',parseFloat(this.value))"></div><div class="fg"><label>Max tokens</label><input type="number" value="${a.maxTokens||800}" oninput="upA('${a.id}','maxTokens',parseInt(this.value))"></div><div class="toggle-row" onclick="toggleSearch('${a.id}')"><span>🌐 Веб-поиск</span><div class="toggle-sw ${a.enableSearch?'active':''}"></div></div>`; 
+  } else if(a.type==='telegram_bot'){ 
+    html+=`<div class="fg"><label>Bot Token</label><input type="password" value="${esc(a.telegramToken||'')}" oninput="upA('${a.id}','telegramToken',this.value)"></div><div class="fg"><label>Chat ID</label><input type="text" value="${esc(a.telegramChatId||'')}" oninput="upA('${a.id}','telegramChatId',this.value)"></div>`; 
+  } 
+  html+=`<div class="toggle-row" onclick="toggleMode('${a.id}')"><span>${a.mode==='mock'?'🟡 Симуляция':'🟢 Реальный'}</span><div class="toggle-sw ${a.mode==='real'?'active':''}"></div></div><button class="btn btn-help" onclick="showAgentInstructions('${a.type}')">📖 Инструкция</button><button class="btn btn-primary" onclick="testAgent('${a.id}')">⚡ Тест</button><button class="btn btn-danger" onclick="deleteAgent('${a.id}')">🗑 Удалить</button><div id="agent-instructions-container"></div>`; 
+  b.innerHTML = html; 
+}
+function upA(id, prop, val) { const a = agents.find(x=>x.id===id); if(a){ a[prop]=val; needsRender=true; saveState(); } }
+function toggleMode(id) { const a = agents.find(x=>x.id===id); if(!a) return; a.mode = a.mode==='mock'?'real':'mock'; beep('click'); renderInspector(a); needsRender=true; saveState(); }
+function toggleSearch(id) { const a = agents.find(x=>x.id===id); if(!a) return; a.enableSearch = !a.enableSearch; beep('click'); renderInspector(a); needsRender=true; saveState(); }
+function deleteAgent(id) { undoStack.push({ action: 'delete', agent: agents.find(a=>a.id===id), connections: connections.filter(c=>c.from===id||c.to===id) }); agents = agents.filter(a=>a.id!==id); connections = connections.filter(c=>c.from!==id && c.to!==id); if(selectedAgent && selectedAgent.id===id) closeInspector(); needsRender=true; saveState(); beep('click'); toast('Удалён (Ctrl+Z)','info') }
+function showAgentInstructions(type) { const inst = AGENT_INSTRUCTIONS[type]; const container = document.getElementById('agent-instructions-container'); if(!inst || !container){ container.innerHTML='<p style="font-size:10px;color:var(--text3)">Инструкция отсутствует</p>'; return } container.innerHTML = `<div class="agent-instructions"><h4>${inst.title}</h4><ol>${inst.steps.map(s=>`<li>${s}</li>`).join('')}</ol><div class="inst-note">${inst.note}</div></div>`; container.scrollIntoView({ behavior:'smooth' }); }
+function manualSaveState() {
+  saveState();
+  toast('Настройки сохранены локально', 'success');
+  beep('ok');
+}
+async function testAgent(id) { 
+  const agent = agents.find(a=>a.id===id); 
+  if(!agent) return; 
+  toast(`Тестирование ${agent.name}...`,'info'); 
+  try{ 
+    let result; 
+    if(agent.type==='minsk_news_parser') result = await executeMinskNewsParser(agent); 
+    else if(agent.type==='telegram_media') result = await executeTelegramMedia(agent, '{"title":"Тест","description":"Тестовое сообщение","imageUrl":null}'); 
+    else if(agent.type==='news_aggregator') result = await executeNewsAggregator(agent); 
+    else if(agent.type==='qwen_chat') result = await executeQwenChat(agent, 'тестовый запрос'); 
+    else if(agent.type==='telegram_bot') result = await executeAgent(agent, 'тест'); 
+    else result = mockResponse(agent, 'test'); 
+    log(agent.name, `✅ Тест: ${result.substring(0,200)}`,'ok'); 
+    toast('Тест успешен','success'); 
+  } catch(e){ 
+    log(agent.name, `❌ Ошибка: ${e.message}`,'err'); 
+    toast(`Ошибка: ${e.message}`,'error'); 
+  } 
+}
+async function executeNewsAggregator(agent) { 
+  const feeds = (agent.feeds||'').split('\n').filter(s=>s.trim()); 
+  if(!feeds.length) return '❌ Нет RSS-лент'; 
+  if(agent.mode==='mock') return '📰 Mock: новости собраны. Для реальных данных укажите сервер и режим Real.'; 
+  try{ 
+    const results=[]; 
+    for(const f of feeds){ 
+      const resp = await fetch(`http://localhost:3000/api/rss?url=${encodeURIComponent(f)}&max=${agent.maxPerFeed||3}`); 
+      if(resp.ok){ 
+        const items = await resp.json(); 
+        results.push(...items.slice(0,agent.maxPerFeed||3).map(i=>i.title)); 
+      } 
+    } 
+    return results.join('\n') || 'Нет новостей'; 
+  } catch(e){ 
+    return `Ошибка RSS: ${e.message}`; 
+  } 
+}
+async function executeQwenChat(agent, input) { 
+  if(agent.mode==='mock') return `🤖 Qwen (Mock): ответ на "${input.substring(0,50)}..."`; 
+  const apiKey = agent.apiKey; 
+  if(!apiKey) throw new Error('Нет API-ключа'); 
+  try {
+    const res = await fetch('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',{ 
+      method:'POST', 
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`}, 
+      body:JSON.stringify({ model:agent.model||'qwen-plus', messages:[{role:'system',content:agent.systemPrompt||''},{role:'user',content:input}], temperature:agent.temperature||0.7, enable_search:!!agent.enableSearch }) 
+    }); 
+    if(!res.ok) throw new Error(`API error ${res.status}`); 
+    const data = await res.json(); 
+    return data.choices[0]?.message?.content || 'Пустой ответ'; 
+  } catch(e) {
+    throw new Error(`Qwen: ${e.message}`);
+  }
+}
+async function executeMinskNewsParser(agent) { 
+  const feeds = (agent.feeds || '').split('\n').filter(s => s.trim()); 
+  const maxNews = agent.maxNews || 3; 
+  if (!feeds.length) return '❌ Нет RSS-лент для Минска'; 
+  if (agent.mode === 'mock') { 
+    const mockNews = [ {title:'Минск: новый сквер открыт', imageUrl:'https://picsum.photos/id/104/300/200', description:'В центре столицы появилась зона отдыха.', link:'https://minsknews.by', date:new Date().toISOString()}, {title:'Технологии будущего в Минске', imageUrl:'https://picsum.photos/id/0/300/200', description:'IT-форум собрал экспертов.', link:'https://belta.by', date:new Date().toISOString()} ]; 
+    return JSON.stringify(mockNews.slice(0,maxNews)); 
+  } 
+  try { 
+    const items = []; 
+    for (const feedUrl of feeds) { 
+      const proxyRss = `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`; 
+      const rssResp = await fetch(proxyRss); 
+      if (!rssResp.ok) continue; 
+      const rssText = await rssResp.text(); 
+      const parser = new DOMParser(); 
+      const xmlDoc = parser.parseFromString(rssText, 'text/xml'); 
+      const entries = xmlDoc.querySelectorAll('item'); 
+      for (let i=0; i<Math.min(entries.length, maxNews*2); i++) { 
+        const entry = entries[i]; 
+        const title = entry.querySelector('title')?.textContent || ''; 
+        const link = entry.querySelector('link')?.textContent || ''; 
+        const description = entry.querySelector('description')?.textContent || title; 
+        const pubDate = entry.querySelector('pubDate')?.textContent || new Date().toISOString(); 
+        let imageUrl = null; 
+        const enclosure = entry.querySelector('enclosure[type^="image"]'); 
+        if (enclosure) imageUrl = enclosure.getAttribute('url'); 
+        if (!imageUrl && link) imageUrl = await fetchOgImage(link); 
+        items.push({ title, link, imageUrl, description, date: pubDate }); 
+      } 
+    } 
+    const unique = []; 
+    const seen = new Set(); 
+    for (const it of items) { 
+      const key = it.title.toLowerCase().trim(); 
+      if (!seen.has(key) && !isDuplicate(key)) { 
+        seen.add(key); 
+        unique.push(it); 
+      } 
+    } 
+    addToHistory(unique.map(it => it.title)); 
+    unique.sort((a,b) => new Date(b.date) - new Date(a.date)); 
+    return JSON.stringify(unique.slice(0, maxNews)); 
+  } catch(e) { 
+    return `Ошибка парсинга: ${e.message}`; 
+  } 
+}
+async function executeTelegramMedia(agent, input) { 
+  const token = agent.telegramToken, chatId = agent.telegramChatId; 
+  if(!token || !chatId) throw new Error('Нет токена или chat_id'); 
+  let newsArray; 
+  try{ 
+    newsArray = JSON.parse(input); 
+    if(!Array.isArray(newsArray)) newsArray = [newsArray]; 
+  } catch(e){ 
+    newsArray = [{ title: input, description: input, imageUrl: null, link: null }]; 
+  } 
+  const style = agent.messageStyle||'card'; 
+  let sent=0; 
+  for(const n of newsArray){ 
+    const dateStr = n.date ? new Date(n.date).toLocaleDateString('ru-RU') : ''; 
+    let caption = ''; 
+    if(style==='card'){ 
+      caption = `<b>📰 ${escapeHtml(n.title)}</b>\n\n${escapeHtml((n.description||'').slice(0,500))}\n\n🕒 ${dateStr}\n🔗 <a href="${escapeHtml(n.link||'')}">Читать полностью</a>`; 
+    } else { 
+      caption = `📌 ${escapeHtml(n.title)}`; 
+    } 
+    try { 
+      if(n.imageUrl && style==='card'){ 
+        const form = new FormData(); 
+        form.append('chat_id', chatId); 
+        form.append('photo', n.imageUrl); 
+        form.append('caption', caption); 
+        form.append('parse_mode', 'HTML'); 
+        const resp = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method:'POST', body: form }); 
+        if(!resp.ok) throw new Error(`Telegram API error: ${resp.status}`); 
+      } else { 
+        const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ chat_id: chatId, text: caption, parse_mode:'HTML', disable_web_page_preview:false }) }); 
+        if(!resp.ok) throw new Error(`Telegram API error: ${resp.status}`); 
+      } 
+      sent++; 
+      await sleep(300); 
+    } catch(err) { 
+      throw new Error(`Ошибка отправки в Telegram: ${err.message}`); 
+    } 
+  } 
+  return `Отправлено ${sent} сообщений в Telegram (стиль: ${style})`; 
+}
+function escapeHtml(str) { return String(str||'').replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
+async function executeAgent(agent, input) { 
+  if(agent.type==='minsk_news_parser') return await executeMinskNewsParser(agent); 
+  if(agent.type==='telegram_media') return await executeTelegramMedia(agent, input); 
+  if(agent.type==='news_aggregator') return await executeNewsAggregator(agent); 
+  if(agent.type==='qwen_chat') return await executeQwenChat(agent, input); 
+  if(agent.type==='telegram_bot') { 
+    if(agent.mode==='mock') return '📨 Mock отправка'; 
+    if(!agent.telegramToken) throw new Error('Нет токена'); 
+    const resp = await fetch(`https://api.telegram.org/bot${agent.telegramToken}/sendMessage`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ chat_id: agent.telegramChatId, text: String(input).substring(0,1000), parse_mode:'HTML' }) }); 
+    if(!resp.ok) throw new Error('Telegram error'); 
+    return 'Отправлено'; 
+  } 
+  return mockResponse(agent, input); 
+}
+function mockResponse(agent, input) { return `✅ [Mock] ${agent.name} обработал запрос. Для реальной работы укажите API-ключи.`; }
+async function runPipeline() { 
+  if(isRunning) return; 
+  if(!agents.length){ toast('Нет агентов','error'); return } 
+  isRunning=true; 
+  pipelineAborted=false; 
+  document.getElementById('btn-run').disabled=true; 
+  document.getElementById('btn-run').style.display='none'; 
+  document.getElementById('btn-stop').style.display='flex'; 
+  log('Система','🚀 Пайплайн запущен','inf'); 
+  beep('start'); 
+  agents.forEach(a=>{ a.status='idle'; a.progress=0; a._lastResult='' }); 
+  totalCost=0; 
+  const inDeg={}; 
+  agents.forEach(a=>inDeg[a.id]=0); 
+  connections.forEach(c=>{ if(inDeg[c.to]!==undefined) inDeg[c.to]++ }); 
+  let queue = agents.filter(a=>inDeg[a.id]===0); 
+  let completedIds=new Set(); 
+  while(queue.length>0 && !pipelineAborted){ 
+    const ready = queue.filter(a=>{ const deps = connections.filter(c=>c.to===a.id); return deps.every(c=>completedIds.has(c.from)); }); 
+    if(!ready.length) break; 
+    await Promise.all(ready.map(async (agent)=>{ 
+      if(pipelineAborted) return; 
+      agent.status='running'; 
+      needsRender=true; 
+      log(agent.name,'▶ Запуск...','inf'); 
+      const prevConns = connections.filter(c=>c.to===agent.id); 
+      let input=''; 
+      for(const pc of prevConns){ 
+        const prev = agents.find(a=>a.id===pc.from); 
+        if(prev && prev._lastResult) input+=(input?'\n':'')+prev._lastResult; 
+      } 
+      if(!input) input = agent.prompt||'Начать'; 
+      try{ 
+        const result = await executeAgent(agent, input); 
+        agent._lastResult = typeof result==='string'?result:JSON.stringify(result); 
+        agent.status='completed'; 
+        agent.progress=100; 
+        needsRender=true; 
+        const cost = estimateCost(agent, result); 
+        totalCost+=cost; 
+        log(agent.name,`✅ ${agent._lastResult.substring(0,80)}`,'ok'); 
+        beep('ok'); 
+        const center = w2s(agent.x+agent.w/2, agent.y+agent.h/2); 
+        spawnParticles(center.x, center.y, 5, agent.color); 
+      } catch(e){ 
+        agent.status='error'; 
+        agent.progress=100; 
+        needsRender=true; 
+        log(agent.name,`❌ ${e.message}`,'err'); 
+        beep('err'); 
+      } 
+      connections.filter(c=>c.from===agent.id).forEach(c=>{ c.active=true; setTimeout(()=>{ c.active=false; needsRender=true; },1000); }); 
+      const next = connections.filter(c=>c.from===agent.id).map(c=>agents.find(a=>a.id===c.to)).filter(Boolean); 
+      next.forEach(n=>{ if(!queue.includes(n)) queue.push(n); }); 
+      completedIds.add(agent.id); 
+    })); 
+    queue = queue.filter(a=>!completedIds.has(a.id)); 
+  } 
+  const success = !pipelineAborted; 
+  const lastResult = agents.filter(a=>a.status==='completed').map(a=>a._lastResult).join('\n').substring(0,200); 
+  addHistory(`Пайплайн (${agents.length} агентов)`, success?'success':'stopped', lastResult, totalCost); 
+  log('Система',`🏁 Завершено. Cost: $${totalCost.toFixed(4)}`,'inf'); 
+  isRunning=false; 
+  document.getElementById('btn-run').disabled=false; 
+  document.getElementById('btn-run').style.display='flex'; 
+  document.getElementById('btn-stop').style.display='none'; 
+  needsRender=true; 
+  saveState(); 
+  beep('ok'); 
+}
+function stopPipeline() { pipelineAborted=true; agents.filter(a=>a.status==='running').forEach(a=>{ a.status='idle'; a.progress=0; }); needsRender=true; }
+function spawnParticles(x,y,count,color){ for(let i=0;i<count;i++) particles.push({ x,y, vx:(Math.random()-.5)*4, vy:(Math.random()-.5)*4, life:1, decay:.008+Math.random()*.015, size:2+Math.random()*3, color }); }
+function updateParticles(){ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vx*=.97; p.vy*=.97; p.life-=p.decay; if(p.life<=0) particles.splice(i,1); } }
+function hitAgent(wx,wy){ for(let i=agents.length-1;i>=0;i--){ const a=agents[i]; if(wx>=a.x && wx<=a.x+a.w && wy>=a.y && wy<=a.y+a.h) return a; } return null; }
+function hitPort(agent,wx,wy){ const r=12/camera.zoom; if(Math.hypot(wx-(agent.x+agent.w), wy-(agent.y+agent.h/2))<r) return 'output'; if(Math.hypot(wx-agent.x, wy-(agent.y+agent.h/2))<r) return 'input'; return null; }
+function showCtx(x,y,id){ ctxAgentId=id; const m=document.getElementById('ctx-menu'); m.style.display='block'; m.style.left=x+'px'; m.style.top=y+'px'; }
+function hideCtx(){ document.getElementById('ctx-menu').style.display='none'; ctxAgentId=null; }
+function ctxDel(){ if(ctxAgentId) deleteAgent(ctxAgentId); hideCtx(); }
+function ctxDup(){ 
+  if(!ctxAgentId) return; 
+  const s=agents.find(a=>a.id===ctxAgentId); 
+  if(s) {
+    const { id, _lastResult, status, progress, ...clone } = s;
+    createAgent(s.type, s.x+30, s.y+30, { ...clone, name: s.name+' (копия)' });
+  }
+  toast('Агент дублирован','success'); 
+  hideCtx(); 
+  beep('click'); 
+}
+function ctxDisc(){ if(!ctxAgentId) return; connections=connections.filter(c=>c.from!==ctxAgentId && c.to!==ctxAgentId); toast('Связи удалены','info'); hideCtx(); beep('click'); needsRender=true; saveState(); }
+addEventListener('click',e=>{ if(!e.target.closest('#ctx-menu')) hideCtx(); });
+function zoomIn(){ camera.zoom=Math.min(2,camera.zoom*1.15); updZoom(); beep('click'); }
+function zoomOut(){ camera.zoom=Math.max(.25,camera.zoom/1.15); updZoom(); beep('click'); }
+function resetView(){ camera={x:0,y:0,zoom:1}; updZoom(); beep('click'); }
+function updZoom(){ document.getElementById('zoom-lvl').textContent=Math.round(camera.zoom*100)+'%'; }
+brdC.addEventListener('mousedown', e=>{ const r=brdC.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top; if(e.button===2) return; if(isConnecting) return; const wp=sw2w(mx,my); const ha=hitAgent(wp.x,wp.y); if(ha){ const ph=hitPort(ha,wp.x,wp.y); if(ph==='output'){ isConnecting=true; connFrom=ha; connPos={x:wp.x,y:wp.y}; brdC.classList.add('connecting'); return; } isDragging=true; dragAgent=ha; dragOff={x:wp.x-ha.x, y:wp.y-ha.y}; openInspector(ha); beep('click'); } else{ isPanning=true; panStart={x:mx-camera.x, y:my-camera.y}; brdC.classList.add('grabbing'); closeInspector(); selectedAgent=null; } });
+brdC.addEventListener('mousemove', e=>{ const r=brdC.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top; if(isConnecting){ connPos=sw2w(mx,my); return; } if(isDragging && dragAgent){ const wp=sw2w(mx,my); dragAgent.x=wp.x-dragOff.x; dragAgent.y=wp.y-dragOff.y; needsRender=true; saveState(); return; } if(isPanning){ camera.x=mx-panStart.x; camera.y=my-panStart.y; needsRender=true; } });
+brdC.addEventListener('mouseup', e=>{ const r=brdC.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top; if(isConnecting && connFrom){ const wp=sw2w(mx,my); const ha=hitAgent(wp.x,wp.y); if(ha && ha.id!==connFrom.id) createConnection(connFrom.id, ha.id); isConnecting=false; connFrom=null; brdC.classList.remove('connecting'); } isDragging=false; dragAgent=null; isPanning=false; brdC.classList.remove('grabbing'); });
+brdC.addEventListener('wheel', e=>{ e.preventDefault(); const r=brdC.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top, zf=e.deltaY>0?.92:1.08, nz=Math.max(.25,Math.min(2,camera.zoom*zf)); camera.x=mx-(mx-camera.x)*(nz/camera.zoom); camera.y=my-(my-camera.y)*(nz/camera.zoom); camera.zoom=nz; updZoom(); needsRender=true; }, {passive:false});
+brdC.addEventListener('contextmenu', e=>{ e.preventDefault(); const r=brdC.getBoundingClientRect(), wp=sw2w(e.clientX-r.left, e.clientY-r.top), ha=hitAgent(wp.x,wp.y); if(ha) showCtx(e.clientX,e.clientY,ha.id); });
+brdC.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; });
+brdC.addEventListener('drop', e=>{ e.preventDefault(); const t=e.dataTransfer.getData('type'); if(!t || (!AGENT_TYPES[t] && !customTypes[t])) return; const wp=sw2w(e.clientX, e.clientY); const a=createAgent(t, wp.x-105, wp.y-60); openInspector(a); toast(`"${a.name}" добавлен`,'success'); beep('click'); });
+addEventListener('keydown', e=>{ if(e.key==='Delete' && selectedAgent && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA') deleteAgent(selectedAgent.id); if(e.ctrlKey && e.key==='Enter'){ e.preventDefault(); runPipeline(); } if(e.ctrlKey && e.shiftKey && e.key==='S'){ e.preventDefault(); stopPipeline(); } if(e.ctrlKey && e.key==='s'){ e.preventDefault(); saveVersion(); toast('Версия сохранена','info'); beep('click'); } if(e.ctrlKey && e.key==='z'){ e.preventDefault(); if(undoStack.length){ const u=undoStack.pop(); agents.push(u.agent); u.connections.forEach(c=>connections.push(c)); needsRender=true; saveState(); toast('Отменено','info'); } } if(e.ctrlKey && e.key==='g'){ e.preventDefault(); togglePanel('aigen-panel'); } if(e.ctrlKey && e.key==='?'){ e.preventDefault(); togglePanel('shortcuts-panel'); } if(e.ctrlKey && e.key==='f'){ e.preventDefault(); document.getElementById('lp-search').focus(); document.getElementById('left-panel').classList.add('expanded'); } if(e.key==='Escape'){ hideCtx(); if(isConnecting){ isConnecting=false; connFrom=null; brdC.classList.remove('connecting'); } ['history-panel','versions-panel','scheduler-panel','aigen-panel','roadmap-panel','help-panel','templates-panel','right-panel'].forEach(p=>document.getElementById(p).classList.remove('open')); document.getElementById('shortcuts-panel').classList.remove('show'); } });
+function renderTemplates() { document.getElementById('tpl-body').innerHTML = PIPELINE_TEMPLATES.filter(t=>!t.isCurrent).map(tpl=>`<div class="tpl-card" onclick="loadTemplate('${tpl.id}')"><div class="tpl-icon">${tpl.icon}</div><div class="tpl-name">${tpl.name}</div><div class="tpl-desc">${tpl.desc}</div><div class="tpl-agents">${tpl.agents.map((a,i)=>`<span class="tpl-tag">${AGENT_TYPES[a.type]?.icon||'⚡'}${i+1}</span>`).join('')}<span class="tpl-tag" style="background:rgba(0,240,255,.1);color:var(--cyan)">${tpl.agents.length} агентов</span></div></div>`).join(''); }
+function loadTemplate(id, skipRun=false) { const tpl = PIPELINE_TEMPLATES.find(t=>t.id===id); if(!tpl) return; agents=[]; connections=[]; camera={x:0,y:0,zoom:1}; const cx = W/2/camera.zoom - camera.x/camera.zoom, cy = H/2/camera.zoom - camera.y/camera.zoom; const created = []; tpl.agents.forEach(ta=>{ const a = createAgent(ta.type, cx+ta.x, cy+ta.y); Object.keys(ta).forEach(k=>{ if(!['type','x','y','id'].includes(k)) a[k]=ta[k]; }); created.push(a); }); tpl.connections.forEach(([f,t])=>{ if(created[f] && created[t]) createConnection(created[f].id, created[t].id); }); needsRender=true; saveState(); updZoom(); toast(`Шаблон "${tpl.name}" загружен`,'success'); beep('ok'); log('Система',`Шаблон: ${tpl.name}`,'inf'); if(tpl.autoRun && !skipRun) setTimeout(()=>runPipeline(),1500); }
+function renderBG() { bgX.clearRect(0,0,W,H); const g=bgX.createRadialGradient(W/2,H/2,0,W/2,H/2,W*.7); g.addColorStop(0,'rgba(0,240,255,.025)'); g.addColorStop(.5,'rgba(176,0,255,.015)'); g.addColorStop(1,'transparent'); bgX.fillStyle=g; bgX.fillRect(0,0,W,H); const gs=40*camera.zoom, ox=camera.x%gs, oy=camera.y%gs; bgX.strokeStyle='rgba(255,255,255,.02)'; bgX.lineWidth=1; bgX.beginPath(); for(let x=ox;x<W;x+=gs){ bgX.moveTo(Math.round(x)+.5,0); bgX.lineTo(Math.round(x)+.5,H); } for(let y=oy;y<H;y+=gs){ bgX.moveTo(0,Math.round(y)+.5); bgX.lineTo(W,Math.round(y)+.5); } bgX.stroke(); bgX.fillStyle='rgba(255,255,255,.03)'; for(let x=ox;x<W;x+=gs) for(let y=oy;y<H;y+=gs){ bgX.beginPath(); bgX.arc(x,y,1,0,Math.PI*2); bgX.fill(); } }
+function renderBoard() { brdX.clearRect(0,0,W,H); brdX.save(); brdX.translate(camera.x,camera.y); brdX.scale(camera.zoom,camera.zoom); connections.forEach(conn=>{ const p=connPts(conn); if(!p) return; const dx=Math.abs(p.x2-p.x1)*.5; brdX.beginPath(); brdX.moveTo(p.x1,p.y1); brdX.bezierCurveTo(p.x1+dx,p.y1,p.x2-dx,p.y2,p.x2,p.y2); const lc=conn.active?(agents.find(a=>a.id===conn.from)?.color||'#00F0FF'):'rgba(255,255,255,.06)'; brdX.strokeStyle=lc; brdX.lineWidth=conn.active?2.5:1.5; brdX.stroke(); if(conn.active){ brdX.save(); brdX.shadowColor=lc; brdX.shadowBlur=8; brdX.strokeStyle=lc; brdX.lineWidth=1; brdX.stroke(); brdX.restore(); } conn.animOff=(conn.animOff||0)+.006; if(conn.animOff>1) conn.animOff-=1; const t=conn.animOff, it=1-t; const dotX=it*it*it*p.x1+3*it*it*t*(p.x1+dx)+3*it*t*t*(p.x2-dx)+t*t*t*p.x2; const dotY=it*it*it*p.y1+3*it*it*t*p.y1+3*it*t*t*p.y2+t*t*t*p.y2; const dc=agents.find(a=>a.id===conn.from)?.color||'#00F0FF'; brdX.beginPath(); brdX.arc(dotX,dotY,3.5,0,Math.PI*2); brdX.fillStyle=dc; brdX.fill(); brdX.beginPath(); brdX.arc(dotX,dotY,7,0,Math.PI*2); const dg=brdX.createRadialGradient(dotX,dotY,0,dotX,dotY,7); dg.addColorStop(0,dc+'50'); dg.addColorStop(1,'transparent'); brdX.fillStyle=dg; brdX.fill(); brdX.save(); brdX.translate(p.x2-1,p.y2); brdX.rotate(Math.atan2(p.y2-(p.x2<p.x1+dx/2?p.y2:p.y1),p.x2-(p.x1+dx))); brdX.beginPath(); brdX.moveTo(0,0); brdX.lineTo(-7,-3.5); brdX.lineTo(-7,3.5); brdX.closePath(); brdX.fillStyle=lc; brdX.fill(); brdX.restore(); }); if(isConnecting && connFrom){ const sp={x:connFrom.x+connFrom.w, y:connFrom.y+connFrom.h/2}; const dx=Math.abs(connPos.x-sp.x)*.5; brdX.beginPath(); brdX.moveTo(sp.x,sp.y); brdX.bezierCurveTo(sp.x+dx,sp.y,connPos.x-dx,connPos.y,connPos.x,connPos.y); brdX.strokeStyle='rgba(0,240,255,.4)'; brdX.lineWidth=1.5; brdX.setLineDash([5,4]); brdX.stroke(); brdX.setLineDash([]); } agents.forEach(a=>{ const sel=selectedAgent===a; const stC=a.status==='running'?'var(--cyan)':a.status==='completed'?'var(--green)':a.status==='error'?'var(--pink)':'var(--text3)'; brdX.save(); if(sel || a.status==='running'){ brdX.shadowColor=a.color; brdX.shadowBlur=sel?16:10 } brdX.beginPath(); brdX.roundRect(a.x,a.y,a.w,a.h,10); brdX.fillStyle=a.type==='router'?'rgba(176,0,255,.06)':'rgba(18,18,26,.85)'; brdX.fill(); brdX.strokeStyle=sel?a.color:'rgba(255,255,255,.06)'; brdX.lineWidth=sel?2:1; brdX.stroke(); brdX.restore(); brdX.beginPath(); brdX.moveTo(a.x+10,a.y); brdX.lineTo(a.x+a.w-10,a.y); brdX.strokeStyle=a.color; brdX.lineWidth=2; brdX.stroke(); brdX.font='18px serif'; brdX.textAlign='center'; brdX.fillText(a.icon,a.x+24,a.y+32); brdX.font='600 11px Inter, sans-serif'; brdX.fillStyle='#E8E8F0'; brdX.textAlign='left'; brdX.fillText(a.name,a.x+42,a.y+28); brdX.beginPath(); brdX.arc(a.x+18,a.y+22,3,0,Math.PI*2); brdX.fillStyle=stC; brdX.fill(); if(a.status==='running'){ brdX.beginPath(); brdX.arc(a.x+18,a.y+22,5+Math.sin(Date.now()/200)*2,0,Math.PI*2); brdX.strokeStyle='rgba(0,240,255,.2)'; brdX.lineWidth=1; brdX.stroke(); } brdX.font='500 9px JetBrains Mono, monospace'; brdX.fillStyle='#8888A0'; brdX.textAlign='right'; brdX.fillText(`⚡${a.performance}`,a.x+a.w-8,a.y+28); brdX.font='400 8px Inter, sans-serif'; brdX.fillStyle=stC; brdX.textAlign='left'; brdX.fillText(a.status.toUpperCase(),a.x+42,a.y+42); if(a.status==='running' || a.status==='completed' || a.status==='error'){ const by=a.y+a.h-12; brdX.fillStyle='rgba(255,255,255,.03)'; brdX.beginPath(); brdX.roundRect(a.x+8,by,a.w-16,3,2); brdX.fill(); brdX.fillStyle=a.status==='error'?'var(--pink)':a.color; brdX.beginPath(); brdX.roundRect(a.x+8,by,(a.w-16)*(a.progress/100),3,2); brdX.fill(); } brdX.beginPath(); brdX.arc(a.x,a.y+a.h/2,4,0,Math.PI*2); brdX.fillStyle='rgba(255,255,255,.06)'; brdX.fill(); brdX.strokeStyle='rgba(255,255,255,.12)'; brdX.lineWidth=1.5; brdX.stroke(); brdX.beginPath(); brdX.arc(a.x+a.w,a.y+a.h/2,4,0,Math.PI*2); brdX.fillStyle=a.color+'25'; brdX.fill(); brdX.strokeStyle=a.color; brdX.lineWidth=1.5; brdX.stroke(); brdX.font='400 7px Inter, sans-serif'; brdX.fillStyle='rgba(255,255,255,.15)'; brdX.textAlign='center'; brdX.fillText((AGENT_TYPES[a.type]||customTypes[a.type])?.name||a.type,a.x+a.w/2,a.y+a.h-22); }); brdX.restore(); particles.forEach(p=>{ brdX.globalAlpha=p.life; brdX.beginPath(); brdX.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); brdX.fillStyle=p.color; brdX.fill(); brdX.globalAlpha=1; }); }
+function connPts(c){ const f=agents.find(a=>a.id===c.from), t=agents.find(a=>a.id===c.to); if(!f||!t) return null; return { x1: f.x+f.w, y1: f.y+f.h/2, x2: t.x, y2: t.y+t.h/2 }; }
+function initAudio(){}
+function beep(type){}
+let frameCount=0; 
+function animate(t){ renderBG(); if(needsRender || frameCount%2===0){ renderBoard(); needsRender=false; } updateParticles(); frameCount++; requestAnimationFrame(animate); }
+function renderAIGen() { const b = document.getElementById('aigen-body'); b.innerHTML = `<p style="font-size:11px;color:var(--text2);margin-bottom:12px">Опишите пайплайн. Например:<br><code>"новости в телеграм"</code> или <code>"минск с фото"</code></p><div class="fg"><label>Описание</label><textarea id="aigen-prompt" placeholder="Опишите..." style="min-height:80px"></textarea></div><button class="btn btn-primary" onclick="generatePipeline()">🤖 Сгенерировать</button><div id="aigen-result"></div>`; }
+function generatePipeline() { const prompt = document.getElementById('aigen-prompt').value.toLowerCase(); if(!prompt){ toast('Введите описание','error'); return } let bestMatch = null, bestScore = 0; AI_PATTERNS.forEach(p=>{ let score = 0; p.keywords.forEach(k=>{ if(prompt.includes(k)) score++ }); if(score>bestScore){ bestScore=score; bestMatch=p } }); const res = document.getElementById('aigen-result'); if(bestMatch && bestScore>0){ const tpl = PIPELINE_TEMPLATES.find(t=>t.id===bestMatch.template); res.innerHTML = `<div class="aigen-result"><div style="font-size:12px;font-weight:600;margin-bottom:8px">✅ Шаблон: ${tpl.icon} ${tpl.name}</div><div style="font-size:11px;color:var(--text2);margin-bottom:12px">${tpl.desc}</div><button class="btn btn-primary" onclick="loadTemplate('${tpl.id}')">📋 Загрузить</button></div>`; beep('ok'); } else { res.innerHTML = `<div class="aigen-result"><div style="font-size:12px;font-weight:600;margin-bottom:8px">🤔 Не нашёл совпадения</div><div style="font-size:11px;color:var(--text2);margin-bottom:12px">Попробуйте: минск, фото, новости</div><button class="btn btn-secondary" onclick="loadTemplate('tpl_minsk_media')">📋 Загрузить Minsk Media</button></div>`; } }
+function renderRoadmap() { const b = document.getElementById('roadmap-body'); b.innerHTML = '<p style="font-size:11px;color:var(--text2);margin-bottom:16px">Предложения для эволюции:</p>'+ROADMAP_PROPOSALS.map(p=>`<div class="roadmap-item"><h4>${p.title}</h4><p>${p.desc}</p><div class="rm-status">${p.status}</div></div>`).join(''); }
+function renderHelp() { const b = document.getElementById('help-body'); b.innerHTML = `<div class="guide-section"><h4>📖 Быстрый старт с Minsk Media</h4><ol><li>Нажмите 📋 внизу → выберите "Minsk Новости → Telegram Медиа"</li><li>Настройте агента "Minsk парсер": RSS-ленты (можно нажать "Вставить предустановленные ленты")</li><li>Настройте "Telegram Медиа": вставьте Bot Token и Chat ID (как в обычном боте)</li><li>Запустите пайплайн — новости с фото улетят в канал</li></ol><div class="tip">💡 Для реального получения картинок нужен сервер /api/article, но и в Mock-режиме будут примеры.</div><div class="tip">⏰ В планировщике можно выбрать "Текущий пайплайн" и запускать его по интервалу или расписанию.</div></div>`+Object.entries(AGENT_INSTRUCTIONS).map(([key,inst])=>`<div class="agent-card"><h5>${inst.title}</h5><ol>${inst.steps.map(s=>`<li>${s}</li>`).join('')}</ol><div class="inst-note">${inst.note}</div></div>`).join(''); }
+function init(){ 
+  renderLeftPanel(); 
+  renderTemplates(); 
+  loadHistory(); 
+  loadVersions(); 
+  loadScheduler(); 
+  renderAIGen(); 
+  renderRoadmap(); 
+  renderHelp(); 
+  updZoom(); 
+  if(!loadState() || !agents.length){ 
+    loadTemplate('tpl_minsk_media'); 
+  } 
+  needsRender=true; 
+  requestAnimationFrame(animate); 
+  setInterval(()=>{ saveState(); },5000); 
+  log('Система','NEURAL FLOW v5.6 — Полностью автономный агрегатор','inf'); 
+  log('Система','🌆 Реальный парсинг изображений, история новостей, автосохранение','inf'); 
+  log('Система','⏰ Планировщик поддерживает интервал и расписание (день+время)','inf'); 
+}
+init();
+</script>
+</body>
+</html>
