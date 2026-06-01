@@ -1,0 +1,32 @@
+name: Neural Flow Scheduler
+
+on:
+  schedule:
+    # РАСПИСАНИЕ: каждые 30 минут (измените cron по желанию)
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Run pipeline
+        run: node run-pipeline.js
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-logs
+          path: logs/
+          retention-days: 7
+          
