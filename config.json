@@ -4,8 +4,8 @@
       "id": "aqmc81cy8h",
       "type": "minsk_news_parser",
       "name": "Minsk парсер",
-      "x": 660,
-      "y": 455.5,
+      "x": 660.1080960943839,
+      "y": 457.5,
       "w": 210,
       "h": 120,
       "status": "completed",
@@ -18,13 +18,13 @@
       "mode": "real",
       "feeds": "https://minsknews.by/rss/\nhttps://belta.by/rss\nhttps://www.onliner.by/feed",
       "maxNews": 5,
-      "_lastResult": "[{\"title\":\"Минск: новый сквер открыт\",\"imageUrl\":\"https://picsum.photos/id/104/300/200\",\"description\":\"В центре столицы появилась зона отдыха.\",\"link\":\"https://minsknews.by\",\"date\":\"2026-06-01T20:21:50.004Z\"},{\"title\":\"Технологии будущего в Минске\",\"imageUrl\":\"https://picsum.photos/id/0/300/200\",\"description\":\"IT-форум собрал экспертов.\",\"link\":\"https://belta.by\",\"date\":\"2026-06-01T20:21:50.004Z\"}]"
+      "_lastResult": "Ошибка парсинга: Failed to fetch"
     },
     {
       "id": "atonopne4f",
       "type": "telegram_media",
       "name": "Telegram Медиа",
-      "x": 1061,
+      "x": 1062.1080960943839,
       "y": 455.5,
       "w": 210,
       "h": 120,
@@ -36,10 +36,10 @@
       "color": "#1E90FF",
       "icon": "📸",
       "mode": "real",
-      "telegramToken": "",
-      "telegramChatId": "",
+      "telegramToken": "7871747868:AAGMhW5yi0_RsX1FF8B9SDBnyz6DkdiDyEQ",
+      "telegramChatId": "482758073",
       "messageStyle": "card",
-      "_lastResult": "Отправлено 2 сообщений в Telegram (стиль: card)"
+      "_lastResult": "Отправлено 1 сообщений в Telegram (стиль: card)"
     }
   ],
   "connections": [
@@ -47,17 +47,33 @@
       "id": "azu1ytnr7v",
       "from": "aqmc81cy8h",
       "to": "atonopne4f",
-      "animOff": 0.08380354845015242,
-      "active": true
+      "animOff": 0.3918035484501573,
+      "active": false
     }
   ],
   "camera": {
-    "x": 0,
-    "y": 0,
-    "zoom": 1
+    "x": 124.86552521277372,
+    "y": 62.993581671546735,
+    "zoom": 0.9024488084275203
   },
   "customTypes": {},
   "history": [
+    {
+      "time": "2026-06-02T19:40:05.374Z",
+      "name": "Пайплайн (2 агентов)",
+      "status": "success",
+      "result": "Ошибка парсинга: Failed to fetch\nОтправлено 1 сообщений в Telegram (стиль: card)",
+      "cost": 0.000068,
+      "agentCount": 2
+    },
+    {
+      "time": "2026-06-01T20:44:07.288Z",
+      "name": "Пайплайн (2 агентов)",
+      "status": "success",
+      "result": "Ошибка парсинга: Failed to fetch\nОтправлено 1 сообщений в Telegram (стиль: card)",
+      "cost": 0.000068,
+      "agentCount": 2
+    },
     {
       "time": "2026-06-01T20:21:50.952Z",
       "name": "Пайплайн (2 агентов)",
@@ -131,25 +147,77 @@
       "agentCount": 2
     }
   ],
-  "versions": [],
+  "versions": [
+    {
+      "id": "ae32s4doxm",
+      "time": "2026-06-02T19:40:42.649Z",
+      "name": "v1",
+      "data": {
+        "agents": [
+          {
+            "id": "aqmc81cy8h",
+            "type": "minsk_news_parser",
+            "name": "Minsk парсер",
+            "x": 659,
+            "y": 457.5,
+            "w": 210,
+            "h": 120,
+            "status": "completed",
+            "progress": 100,
+            "prompt": "Парсинг новостей Минска с извлечением изображений и деталей",
+            "pricePer1k": 0.001,
+            "performance": "0.88",
+            "color": "#FFB347",
+            "icon": "🌆",
+            "mode": "real",
+            "feeds": "https://minsknews.by/rss/\nhttps://belta.by/rss\nhttps://www.onliner.by/feed",
+            "maxNews": 5,
+            "_lastResult": "Ошибка парсинга: Failed to fetch"
+          },
+          {
+            "id": "atonopne4f",
+            "type": "telegram_media",
+            "name": "Telegram Медиа",
+            "x": 1061,
+            "y": 455.5,
+            "w": 210,
+            "h": 120,
+            "status": "completed",
+            "progress": 100,
+            "prompt": "Отправляет текст + фото, как в канале minsk_gl",
+            "pricePer1k": 0.005,
+            "performance": "0.92",
+            "color": "#1E90FF",
+            "icon": "📸",
+            "mode": "real",
+            "telegramToken": "7871747868:AAGMhW5yi0_RsX1FF8B9SDBnyz6DkdiDyEQ",
+            "telegramChatId": "482758073",
+            "messageStyle": "card",
+            "_lastResult": "Отправлено 1 сообщений в Telegram (стиль: card)"
+          }
+        ],
+        "connections": [
+          {
+            "id": "azu1ytnr7v",
+            "from": "aqmc81cy8h",
+            "to": "atonopne4f",
+            "animOff": 0.8598035484501537,
+            "active": false
+          }
+        ],
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "customTypes": {}
+      }
+    }
+  ],
   "scheduler": [
     {
-      "id": "adlb1u50k9",
-      "active": true,
-      "type": "datetime",
-      "isCurrent": true,
-      "time": "08:00",
-      "days": [
-        0,
-        1,
-        2
-      ],
-      "template": null,
-      "nextRun": 1780376400000
-    },
-    {
       "id": "akxzm44ztk",
-      "active": true,
+      "active": false,
       "type": "datetime",
       "isCurrent": true,
       "time": "09:00",
@@ -161,11 +229,11 @@
         4
       ],
       "template": null,
-      "nextRun": 1780380000000
+      "nextRun": 1780466400000
     },
     {
       "id": "aynyu7tniy",
-      "active": true,
+      "active": false,
       "type": "datetime",
       "isCurrent": true,
       "time": "10:00",
@@ -177,11 +245,11 @@
         4
       ],
       "template": null,
-      "nextRun": 1780383600000
+      "nextRun": 1780470000000
     },
     {
       "id": "a2w10leloi",
-      "active": true,
+      "active": false,
       "type": "datetime",
       "isCurrent": true,
       "time": "11:00",
@@ -193,11 +261,11 @@
         4
       ],
       "template": null,
-      "nextRun": 1780387200000
+      "nextRun": 1780473600000
     },
     {
       "id": "aa233ur3ta",
-      "active": true,
+      "active": false,
       "type": "datetime",
       "isCurrent": true,
       "time": "13:00",
@@ -209,11 +277,11 @@
         4
       ],
       "template": null,
-      "nextRun": 1780394400000
+      "nextRun": 1780480800000
     },
     {
       "id": "aes3o241fd",
-      "active": true,
+      "active": false,
       "type": "datetime",
       "isCurrent": true,
       "time": "15:00",
@@ -225,11 +293,11 @@
         4
       ],
       "template": null,
-      "nextRun": 1780401600000
+      "nextRun": 1780488000000
     },
     {
       "id": "a9psoj2xi5",
-      "active": true,
+      "active": false,
       "type": "datetime",
       "isCurrent": true,
       "time": "17:00",
@@ -241,11 +309,11 @@
         4
       ],
       "template": null,
-      "nextRun": 1780408800000
+      "nextRun": 1780495200000
     },
     {
       "id": "aazp9pwy1w",
-      "active": true,
+      "active": false,
       "type": "datetime",
       "isCurrent": true,
       "time": "19:00",
@@ -257,16 +325,16 @@
         4
       ],
       "template": null,
-      "nextRun": 1780416000000
+      "nextRun": 1780502400000
     },
     {
       "id": "axx1g7kxzt",
-      "active": true,
+      "active": false,
       "type": "interval",
       "isCurrent": true,
       "interval": 180,
       "template": null,
-      "nextRun": 1780346123308
+      "nextRun": 1780430077733
     }
   ],
   "version": "5.6"
