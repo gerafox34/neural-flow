@@ -47,7 +47,7 @@
       "id": "azu1ytnr7v",
       "from": "aqmc81cy8h",
       "to": "atonopne4f",
-      "animOff": 0.3918035484501573,
+      "animOff": 0.9718035484501591,
       "active": false
     }
   ],
@@ -335,6 +335,15 @@
       "interval": 180,
       "template": null,
       "nextRun": 1780430077733
+    },
+    {
+      "id": "a9f2e8kxib",
+      "active": true,
+      "type": "interval",
+      "isCurrent": true,
+      "interval": 80,
+      "template": null,
+      "nextRun": 1780430559970
     }
   ],
   "version": "5.6"
