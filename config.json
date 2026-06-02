@@ -36,8 +36,8 @@
       "color": "#1E90FF",
       "icon": "📸",
       "mode": "real",
-      "telegramToken": "7871747868:AAGMhW5yi0_RsX1FF8B9SDBnyz6DkdiDyEQ",
-      "telegramChatId": "482758073",
+      "telegramToken": "",
+      "telegramChatId": "",
       "messageStyle": "card",
       "_lastResult": "Отправлено 2 сообщений в Telegram (стиль: card)"
     }
